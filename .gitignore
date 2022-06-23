@@ -21,3 +21,101 @@
 
 # virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
 hs_err_pid*
+# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio, WebStorm and Rider
+# Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
+
+# User-specific stuff
+java-selenium-sdk/.idea
+java-selenium-sdk/.idea/**/tasks.xml
+java-selenium-sdk/.idea/**/usage.statistics.xml
+java-selenium-sdk/.idea/**/dictionaries
+java-selenium-sdk/.idea/**/shelf
+
+# AWS User-specific
+java-selenium-sdk/.idea/**/aws.xml
+
+# Generated files
+java-selenium-sdk/.idea/**/contentModel.xml
+
+# Sensitive or high-churn files
+java-selenium-sdk/.idea/**/dataSources/
+java-selenium-sdk/.idea/**/dataSources.ids
+java-selenium-sdk/.idea/**/dataSources.local.xml
+java-selenium-sdk/.idea/**/sqlDataSources.xml
+java-selenium-sdk/.idea/**/dynamic.xml
+java-selenium-sdk/.idea/**/uiDesigner.xml
+java-selenium-sdk/.idea/**/dbnavigator.xml
+
+# Gradle
+java-selenium-sdk/.idea/**/gradle.xml
+java-selenium-sdk/.idea/**/libraries
+
+# Gradle and Maven with auto-import
+# When using Gradle or Maven with auto-import, you should exclude module files,
+# since they will be recreated, and may cause churn.  Uncomment if using
+# auto-import.
+# java-selenium-sdk/.idea/artifacts
+# java-selenium-sdk/.idea/compiler.xml
+# java-selenium-sdk/.idea/jarRepositories.xml
+# java-selenium-sdk/.idea/modules.xml
+# java-selenium-sdk/.idea/*.iml
+# java-selenium-sdk/.idea/modules
+# *.iml
+# *.ipr
+
+# CMake
+cmake-build-*/
+
+# Mongo Explorer plugin
+java-selenium-sdk/.idea/**/mongoSettings.xml
+
+# File-based project format
+*.iws
+
+# IntelliJ
+out/
+
+# mpeltonen/sbt-idea plugin
+java-selenium-sdk/.idea_modules/
+
+# JIRA plugin
+atlassian-ide-plugin.xml
+
+# Cursive Clojure plugin
+java-selenium-sdk/.idea/replstate.xml
+
+# SonarLint plugin
+java-selenium-sdk/.idea/sonarlint/
+
+# Crashlytics plugin (for Android Studio and IntelliJ)
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
+
+# Editor-based Rest Client
+java-selenium-sdk/.idea/httpRequests
+
+# Android studio 3.1+ serialized cache file
+java-selenium-sdk/.idea/caches/build_file_checksums.ser
+java-selenium-sdk/.gradle
+**/build/
+!src/**/build/
+
+# Ignore Gradle GUI config
+gradle-app.setting
+
+# Avoid ignoring Gradle wrapper jar file (.jar files are usually ignored)
+!gradle-wrapper.jar
+
+# Avoid ignore Gradle wrappper properties
+!gradle-wrapper.properties
+
+# Cache of project
+.gradletasknamecache
+
+# Eclipse Gradle plugin generated files
+# Eclipse Core
+.project
+# JDT-specific (Eclipse Java Development Tools)
+.classpath

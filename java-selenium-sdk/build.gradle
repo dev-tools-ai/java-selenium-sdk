@@ -1,0 +1,119 @@
+plugins {
+    id 'java-library'
+    id 'eclipse'
+    id 'maven-publish'
+    id 'signing'
+}
+apply plugin: 'java'
+
+test {
+    dependsOn cleanTest
+    testLogging.showStandardStreams = true
+}
+
+description="${project.name} build script"
+group="ai.dev-tools.sdk"
+version="0.1.0"
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    api 'com.google.code.gson:gson:2.9.0'
+    api 'com.squareup.okhttp3:okhttp:4.9.3'
+    api 'org.seleniumhq.selenium:selenium-java:3.141.59'
+
+    implementation 'io.github.bonigarcia:webdrivermanager:5.1.0'
+    implementation 'io.github.bonigarcia:webdrivermanager:5.1.0'
+    implementation 'org.apache.logging.log4j:log4j-api:2.17.1'
+    implementation 'log4j:log4j:1.2.17'
+    implementation 'junit:junit:4.13.1'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.7.2'
+    testImplementation "org.mockito:mockito-core:3.+"
+}
+
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+
+    withJavadocJar()
+    withSourcesJar()
+}
+
+javadoc {
+    source = sourceSets.main.allJava
+    classpath = configurations.compileClasspath
+
+    options {
+        //setOutputLevel JavadocOutputLevel.VERBOSE
+        setMemberLevel JavadocMemberLevel.PUBLIC
+        setAuthor true
+        
+        jFlags '-Dhttp.agent=gradle-javadoc'
+
+        links "https://docs.oracle.com/en/java/javase/11/docs/api/"
+        links "https://www.selenium.dev/selenium/docs/api/java/"
+    }
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+
+            pom {
+                name = 'test-ai-selenium'
+                description = 'Testing with selenium enhanced by dev-tools.ai'
+                inceptionYear = '2021'
+                url = 'https://github.com/testdotai/java-selenium-sdk'
+                licenses {
+                    license {
+                        name = 'Apache License, Version 2.0'
+                        url = 'https://www.apache.org/licenses/LICENSE-2.0'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'dev-tools.ai'
+                        name = 'Appdiff, Inc.'
+                        email = 'sdk@dev-tools.ai'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:https://github.com/testdotai/java-selenium-sdk.git'
+                    developerConnection = 'scm:git:ssh://github.com/testdotai/java-selenium-sdk.git'
+                    url = 'https://github.com/testdotai/java-selenium-sdk'
+                }
+            }
+        }
+    }
+
+    repositories {
+        maven {
+            url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+
+            credentials {
+                username project.hasProperty("ossrhUsername") ? project.properties["ossrhUsername"] : System.getenv('ossrhUsername')
+                password project.hasProperty("ossrhPassword") ? project.properties["ossrhPassword"] : System.getenv('ossrhPassword')
+            }
+        }
+    }
+}
+
+
+signing {
+    sign publishing.publications.mavenJava
+}
+
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+wrapper {
+    gradleVersion = '7.4.1'
+}
