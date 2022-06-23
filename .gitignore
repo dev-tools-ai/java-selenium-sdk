@@ -25,41 +25,41 @@ hs_err_pid*
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
 # User-specific stuff
-java-selenium-sdk/.idea
-java-selenium-sdk/.idea/**/tasks.xml
-java-selenium-sdk/.idea/**/usage.statistics.xml
-java-selenium-sdk/.idea/**/dictionaries
-java-selenium-sdk/.idea/**/shelf
+.idea
+.idea/**/tasks.xml
+.idea/**/usage.statistics.xml
+.idea/**/dictionaries
+.idea/**/shelf
 
 # AWS User-specific
-java-selenium-sdk/.idea/**/aws.xml
+.idea/**/aws.xml
 
 # Generated files
-java-selenium-sdk/.idea/**/contentModel.xml
+.idea/**/contentModel.xml
 
 # Sensitive or high-churn files
-java-selenium-sdk/.idea/**/dataSources/
-java-selenium-sdk/.idea/**/dataSources.ids
-java-selenium-sdk/.idea/**/dataSources.local.xml
-java-selenium-sdk/.idea/**/sqlDataSources.xml
-java-selenium-sdk/.idea/**/dynamic.xml
-java-selenium-sdk/.idea/**/uiDesigner.xml
-java-selenium-sdk/.idea/**/dbnavigator.xml
+.idea/**/dataSources/
+.idea/**/dataSources.ids
+.idea/**/dataSources.local.xml
+.idea/**/sqlDataSources.xml
+.idea/**/dynamic.xml
+.idea/**/uiDesigner.xml
+.idea/**/dbnavigator.xml
 
 # Gradle
-java-selenium-sdk/.idea/**/gradle.xml
-java-selenium-sdk/.idea/**/libraries
+.idea/**/gradle.xml
+.idea/**/libraries
 
 # Gradle and Maven with auto-import
 # When using Gradle or Maven with auto-import, you should exclude module files,
 # since they will be recreated, and may cause churn.  Uncomment if using
 # auto-import.
-# java-selenium-sdk/.idea/artifacts
-# java-selenium-sdk/.idea/compiler.xml
-# java-selenium-sdk/.idea/jarRepositories.xml
-# java-selenium-sdk/.idea/modules.xml
-# java-selenium-sdk/.idea/*.iml
-# java-selenium-sdk/.idea/modules
+# .idea/artifacts
+# .idea/compiler.xml
+# .idea/jarRepositories.xml
+# .idea/modules.xml
+# .idea/*.iml
+# .idea/modules
 # *.iml
 # *.ipr
 
@@ -67,7 +67,7 @@ java-selenium-sdk/.idea/**/libraries
 cmake-build-*/
 
 # Mongo Explorer plugin
-java-selenium-sdk/.idea/**/mongoSettings.xml
+.idea/**/mongoSettings.xml
 
 # File-based project format
 *.iws
@@ -76,16 +76,16 @@ java-selenium-sdk/.idea/**/mongoSettings.xml
 out/
 
 # mpeltonen/sbt-idea plugin
-java-selenium-sdk/.idea_modules/
+.idea_modules/
 
 # JIRA plugin
 atlassian-ide-plugin.xml
 
 # Cursive Clojure plugin
-java-selenium-sdk/.idea/replstate.xml
+.idea/replstate.xml
 
 # SonarLint plugin
-java-selenium-sdk/.idea/sonarlint/
+.idea/sonarlint/
 
 # Crashlytics plugin (for Android Studio and IntelliJ)
 com_crashlytics_export_strings.xml
@@ -94,11 +94,11 @@ crashlytics-build.properties
 fabric.properties
 
 # Editor-based Rest Client
-java-selenium-sdk/.idea/httpRequests
+.idea/httpRequests
 
 # Android studio 3.1+ serialized cache file
-java-selenium-sdk/.idea/caches/build_file_checksums.ser
-java-selenium-sdk/.gradle
+.idea/caches/build_file_checksums.ser
+.gradle
 **/build/
 !src/**/build/
 
