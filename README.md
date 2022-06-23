@@ -24,7 +24,7 @@ Add the following line(s) to the dependencies section in your
 ```xml
 
 <dependency>
-    <groupId>ai.dev-tools.sdk</groupId>
+    <groupId>ai.dev-tools</groupId>
     <artifactId>devtools-ai-selenium</artifactId>
     <version>0.1.0</version>
 </dependency>
@@ -32,7 +32,7 @@ Add the following line(s) to the dependencies section in your
 
 **build.gradle (Gradle)**
 ```groovy
-implementation 'ai.devtools.sdk:devtools-ai-selenium:0.1.0'
+implementation 'ai.devtools:devtools-ai-selenium:0.1.0'
 ```
 
 ## Tutorial

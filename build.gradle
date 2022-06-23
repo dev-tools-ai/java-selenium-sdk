@@ -12,7 +12,7 @@ test {
 }
 
 description="${project.name} build script"
-group="ai.dev-tools.sdk"
+group="ai.dev-tools"
 version="0.1.0"
 
 repositories {
