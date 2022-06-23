@@ -1,4 +1,4 @@
-[![dev-tools.ai sdk logo](https://testdotai.github.io/static-assets/shared/logo-sdk.png)](https://dev-tools.ai/sdk)
+[![dev-tools.ai sdk logo](https://dev-tools.ai/img/logo.svg)](https://dev-tools.ai/)
 
 [![JDK-11+](https://img.shields.io/badge/JDK-11%2B-blue)](https://adoptium.net)
 [![javadoc](https://javadoc.io/badge2/ai.test.sdk/test-ai-selenium/javadoc.svg)](https://javadoc.io/doc/ai.test.sdk/test-ai-selenium)
