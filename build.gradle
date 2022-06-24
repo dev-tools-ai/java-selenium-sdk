@@ -1,10 +1,37 @@
+
+
 plugins {
     id 'java-library'
-    id 'eclipse'
+    id 'java'
     id 'maven-publish'
     id 'signing'
 }
-apply plugin: 'java'
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+signing {
+    println "signing"
+    sign configurations.archives
+}
+
+/*
+signing {
+    sign publishing.publications.maven
+}*/
+
+tasks.register('debug'){
+    println myproperty
+}
+
+
 
 test {
     dependsOn cleanTest
@@ -14,6 +41,10 @@ test {
 description="${project.name} build script"
 group="ai.dev-tools"
 version="0.1.0"
+
+group="ai.dev-tools"
+archivesBaseName = "ai-devtools-selenium"
+version = "0.1.0"
 
 repositories {
     mavenLocal()
@@ -60,60 +91,115 @@ javadoc {
     }
 }
 
+
 publishing {
     publications {
-        mavenJava(MavenPublication) {
+        maven(MavenPublication) {
+            groupId = 'ai.dev-tools'
+            artifactId = 'ai-devtools-selenium'
+            version = "0.1.0"
             from components.java
 
             pom {
-                name = 'test-ai-selenium'
-                description = 'Testing with selenium enhanced by dev-tools.ai'
-                inceptionYear = '2021'
-                url = 'https://github.com/testdotai/java-selenium-sdk'
+                name = 'dev-tools.ai Smartdriver for Selenium'
+                packaging = 'jar'
+                // optionally artifactId can be defined here
+                description = 'The Smartdriver allows to augment your Selenium test with visual AI. You need to create an account at dev-tools.ai'
+                url = 'https://dev-tools.ai'
+
+                scm {
+                    connection = 'scm:git:https://github.com/dev-tools-ai/java-selenium-sdk'
+                    developerConnection = 'scm:git:ssh://github.com/dev-tools-ai/java-selenium-sdk'
+                    url = 'https://github.com/dev-tools-ai/java-selenium-sdk'
+                }
                 licenses {
                     license {
-                        name = 'Apache License, Version 2.0'
-                        url = 'https://www.apache.org/licenses/LICENSE-2.0'
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
                     }
                 }
+
                 developers {
                     developer {
-                        id = 'dev-tools.ai'
-                        name = 'Appdiff, Inc.'
-                        email = 'sdk@dev-tools.ai'
+                        id = 'edeguine'
+                        name = 'Etienne DEGUINE'
+                        email = 'etienne@dev-tools.ai'
                     }
                 }
+            }
+        }
+    }
+    repositories {
+        maven {
+            credentials {
+                username = ossrhUsername
+                password = ossrhPassword
+            }
+
+            url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
+        }
+    }
+}
+
+
+
+/*
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name 'dev-tools.ai Smartdriver for Selenium'
+                packaging 'jar'
+                // optionally artifactId can be defined here
+                description 'The Smartdriver allows to augment your Selenium test with visual AI. You need to create an account at dev-tools.ai'
+                url 'https://dev-tools.ai'
+
                 scm {
-                    connection = 'scm:git:https://github.com/testdotai/java-selenium-sdk.git'
-                    developerConnection = 'scm:git:ssh://github.com/testdotai/java-selenium-sdk.git'
-                    url = 'https://github.com/testdotai/java-selenium-sdk'
+                    connection = 'scm:git:https://github.com/dev-tools-ai/java-selenium-sdk'
+                    developerConnection = 'scm:git:ssh://github.com/dev-tools-ai/java-selenium-sdk'
+                    url = 'https://github.com/dev-tools-ai/java-selenium-sdk'
+                }
+                licenses {
+                    license {
+                        name 'The Apache License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+
+                developers {
+                    developer {
+                        id 'edeguine'
+                        name 'Etienne DEGUINE'
+                        email 'etienne@dev-tools.ai'
+                    }
                 }
             }
         }
     }
-
-    repositories {
-        maven {
-            url = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
-
-            credentials {
-                username project.hasProperty("ossrhUsername") ? project.properties["ossrhUsername"] : System.getenv('ossrhUsername')
-                password project.hasProperty("ossrhPassword") ? project.properties["ossrhPassword"] : System.getenv('ossrhPassword')
-            }
-        }
-    }
 }
+*/
 
 
-signing {
-    sign publishing.publications.mavenJava
+artifacts {
+    archives jar
+    archives sourcesJar
+    archives javadocJar
 }
-
 
 tasks.named('test') {
     useJUnitPlatform()
 }
 
 wrapper {
-    gradleVersion = '7.4.1'
+    gradleVersion = '7.4.2'
 }
