@@ -17,10 +17,13 @@ task sourcesJar(type: Jar) {
     from sourceSets.main.allSource
 }
 
+/*
 signing {
-    println "signing"
+    sign jar
+    sign sourcesJar
+    sign javadocJar
     sign configurations.archives
-}
+}*/
 
 /*
 signing {
@@ -32,19 +35,13 @@ tasks.register('debug'){
 }
 
 
-
-test {
-    dependsOn cleanTest
-    testLogging.showStandardStreams = true
-}
-
 description="${project.name} build script"
 group="ai.dev-tools"
-version="0.1.0"
+version="0.1.3"
 
 group="ai.dev-tools"
 archivesBaseName = "ai-devtools-selenium"
-version = "0.1.0"
+version = "0.1.3"
 
 repositories {
     mavenLocal()
@@ -56,6 +53,7 @@ dependencies {
     api 'com.squareup.okhttp3:okhttp:4.9.3'
     api 'org.seleniumhq.selenium:selenium-java:3.141.59'
 
+    implementation 'io.github.bonigarcia:webdrivermanager:5.1.0'
     implementation 'io.github.bonigarcia:webdrivermanager:5.1.0'
     implementation 'org.apache.logging.log4j:log4j-api:2.17.1'
     implementation 'log4j:log4j:1.2.17'
@@ -96,7 +94,7 @@ publishing {
         maven(MavenPublication) {
             groupId = 'ai.dev-tools'
             artifactId = 'ai-devtools-selenium'
-            version = "0.1.0"
+            version = "0.1.3"
             from components.java
 
             pom {
@@ -141,54 +139,6 @@ publishing {
 }
 
 
-
-/*
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-
-            repository(url: "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            snapshotRepository(url: "https://s01.oss.sonatype.org/content/repositories/snapshots/") {
-                authentication(userName: ossrhUsername, password: ossrhPassword)
-            }
-
-            pom.project {
-                name 'dev-tools.ai Smartdriver for Selenium'
-                packaging 'jar'
-                // optionally artifactId can be defined here
-                description 'The Smartdriver allows to augment your Selenium test with visual AI. You need to create an account at dev-tools.ai'
-                url 'https://dev-tools.ai'
-
-                scm {
-                    connection = 'scm:git:https://github.com/dev-tools-ai/java-selenium-sdk'
-                    developerConnection = 'scm:git:ssh://github.com/dev-tools-ai/java-selenium-sdk'
-                    url = 'https://github.com/dev-tools-ai/java-selenium-sdk'
-                }
-                licenses {
-                    license {
-                        name 'The Apache License, Version 2.0'
-                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    }
-                }
-
-                developers {
-                    developer {
-                        id 'edeguine'
-                        name 'Etienne DEGUINE'
-                        email 'etienne@dev-tools.ai'
-                    }
-                }
-            }
-        }
-    }
-}
-*/
-
-
 artifacts {
     archives jar
     archives sourcesJar
@@ -201,4 +151,8 @@ tasks.named('test') {
 
 wrapper {
     gradleVersion = '7.4.2'
+}
+
+signing {
+    sign publishing.publications.maven
 }
