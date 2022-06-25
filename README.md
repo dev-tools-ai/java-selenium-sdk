@@ -6,7 +6,7 @@
 [![Discord](https://img.shields.io/discord/974528356253065236?&logo=discord)](https://discord.gg/2J9WEYdq5C)
 [![Twitter](https://img.shields.io/twitter/follow/DevToolsAI)](https://twitter.com/DevToolsAI)
 
-The dev-tools.ai selenium SDK is a simple library that makes it easy to write robust cross-browser web tests backed by computer vision and artificial intelligence.
+The [dev-tools.ai](https://dev-tools.ai) selenium SDK is a simple library that makes it easy to write robust cross-browser web tests backed by computer vision and artificial intelligence.
 
 dev-tools.ai integrates seamelessly with your existing tests, and will act as backup if your selectors break/fail by attempting to visually (computer vision) identify elements.
 
