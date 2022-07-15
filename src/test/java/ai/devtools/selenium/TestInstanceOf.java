@@ -44,7 +44,7 @@ public class TestInstanceOf {
         options.addArguments("window-size=1280x1024");
         ChromeDriver chromeDriver = new ChromeDriver(options);
 
-        String api_key = "<<get your api key at smartdriver.dev-tools.ai>>";
+        String api_key = "abcd";
         HashMap<String, Object> config = new HashMap<String, Object>();
         config.put("testCaseName", "some_tc");
         SmartDriver baseDriver = new SmartDriver(chromeDriver, api_key, config);
