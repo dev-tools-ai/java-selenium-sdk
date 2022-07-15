@@ -38,7 +38,7 @@ tasks.register('debug'){
 description="${project.name} build script"
 group="ai.dev-tools"
 archivesBaseName = "ai-devtools-selenium"
-version = "0.1.5"
+version = "0.1.6"
 
 repositories {
     mavenLocal()
@@ -91,7 +91,7 @@ publishing {
         maven(MavenPublication) {
             groupId = 'ai.dev-tools'
             artifactId = 'ai-devtools-selenium'
-            version = "0.1.5"
+            version = "0.1.6"
             from components.java
 
             pom {
