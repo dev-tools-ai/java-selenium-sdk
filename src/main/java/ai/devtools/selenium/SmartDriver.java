@@ -1007,4 +1007,9 @@ public class SmartDriver extends RemoteWebDriver {
 			this(e, key, "");
 		}
 	}
+
+	@Override
+	public void close() {
+		driver.close();
+	}
 }
