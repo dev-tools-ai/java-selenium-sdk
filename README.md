@@ -25,13 +25,13 @@ Add the following line(s) to the dependencies section in your
 <dependency>
     <groupId>ai.dev-tools</groupId>
     <artifactId>devtools-ai-selenium</artifactId>
-    <version>0.1.3</version>
+    <version>0.1.7</version>
 </dependency>
 ````
 
 **build.gradle (Gradle)**
 ```groovy
-implementation 'ai.devtools:devtools-ai-selenium:0.1.3'
+implementation 'ai.devtools:devtools-ai-selenium:0.1.7'
 ```
 
 ## Tutorial

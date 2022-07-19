@@ -1,6 +1,7 @@
 package ai.devtools.selenium;
 
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.By;
 import org.openqa.selenium.chrome.ChromeDriver;
 import io.github.bonigarcia.wdm.WebDriverManager;
 
@@ -29,6 +30,7 @@ public class BasicCrawl  {
         System.setOut(originalOut);
         System.setErr(originalErr);
     }
+
     @Test void seleniumTest() throws Throwable
     {
         setUpStreams();
@@ -53,7 +55,7 @@ public class BasicCrawl  {
             String out = outContent.toString();
             assert (
                     out.contains("Successful classification of link What Artists Notice") ||
-                    out.contains("Cache hit for link What Artists Notice") || 
+                    out.contains("Cache hit for link What Artists Notice") ||
 	            out.contains("Screenshot exists. Found element on screenshot for link What Artists Notice"));
             element.click();
             Thread.sleep(2000);
@@ -80,6 +82,38 @@ public class BasicCrawl  {
             WebElement someText = driver.findElementByXPath("//a[contains(text(),'guide to Bel')]");
             assert (someText.isDisplayed());
 
+        } finally {
+            String finalOout = outContent.toString();
+            String finalErr = errContent.toString();
+            restoreStreams();
+            System.out.println(finalOout); // useful for debugging if test goes wrong
+            System.err.println(finalErr); // same
+            chromeDriver.quit();
+        }
+    }
+
+
+    @Test void sampleTest() throws Throwable
+    {
+        setUpStreams();
+        WebDriverManager.chromedriver().setup();
+        ChromeOptions options = new ChromeOptions();
+        options.addArguments("--headless");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+        options.addArguments("window-size=1280x1024");
+        ChromeDriver chromeDriver = new ChromeDriver(options);
+        try {
+            String api_key = "<<get your api key at smartdriver.dev-tools.ai>>";
+            HashMap<String, Object> config = new HashMap<String, Object>();
+            config.put("testCaseName", "stopa_navigation");
+            SmartDriver driver = new SmartDriver(chromeDriver, api_key, config);
+            driver.get("https://google.com");
+
+            Thread.sleep(2000);
+
+            WebElement searchBoxElement = driver.findElement(By.name("q"));
+            searchBoxElement.sendKeys("hello world\n");
         } finally {
             String finalOout = outContent.toString();
             String finalErr = errContent.toString();

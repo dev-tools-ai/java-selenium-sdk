@@ -12,6 +12,7 @@ import java.util.logging.Level;
 import javax.imageio.ImageIO;
 
 import com.google.gson.JsonNull;
+import org.apache.log4j.PropertyConfigurator;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.NoSuchElementException;
@@ -27,9 +28,11 @@ import org.openqa.selenium.remote.FileDetector;
 import org.openqa.selenium.remote.RemoteWebDriver;
 import org.openqa.selenium.remote.SessionId;
 
-import org.slf4j.helpers.MessageFormatter;
-import org.apache.log4j.Logger;
+
 import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.Logger;
+
+import org.slf4j.helpers.MessageFormatter;
 
 import com.google.gson.JsonObject;
 
@@ -49,7 +52,7 @@ public class SmartDriver extends RemoteWebDriver {
 	/**
 	 * The logger for this class
 	 */
-	private static Logger log =Logger.getLogger(SmartDriver.class);
+	private Logger log = Logger.getLogger(SmartDriver.class);
 
 	/**
 	 * The client to use for making http requests
@@ -100,15 +103,15 @@ public class SmartDriver extends RemoteWebDriver {
 	 */
 	public SmartDriver(RemoteWebDriver driver, String apiKey, Map<String, Object> initializationDict) throws IOException
 	{
-		BasicConfigurator.configure();
-		log.setLevel(org.apache.log4j.Level.INFO);
 		this.driver = driver;
 		this.apiKey = apiKey;
+		log.setLevel(org.apache.log4j.Level.INFO);
+		BasicConfigurator.configure();
 
 		this.testCaseName = (String) initializationDict.get("testCaseName");
 		this.useClassifierDuringCreation = (Boolean) initializationDict.get("useClassifierDuringCreation");
 		this.testCaseCreationMode = Utils.StrToBool(System.getenv("DEVTOOLSAI_INTERACTIVE"));
-		
+
 		if (testCaseName == null)
 		{
 			StackTraceElement[] sl = Thread.currentThread().getStackTrace();
@@ -150,7 +153,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Constructor, creates a new SmartDriver with the default server url (<a href="https://smartdriver.dev-tools.ai">smartdriver.dev-tools.ai</a>), non-interactive mode, and with training enabled.
-	 * 
+	 *
 	 * @param driver The {@code RemoteWebDriver} to wrap
 	 * @param apiKey Your API key, acquired from <a href="https://smartdriver.dev-tools.ai">smartdriver.dev-tools.ai</a>.
 	 * @throws IOException If there was an initialization error.
@@ -162,7 +165,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Convenience method, implicitly wait for the specified amount of time.
-	 * 
+	 *
 	 * @param waitTime The number of seconds to implicitly wait.
 	 * @return This {@code SmartDriver}, for chaining convenience.
 	 */
@@ -186,7 +189,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Opens a web browser and directs it to {@code url}.
-	 * 
+	 *
 	 * @param url The URL to launch the browser to.
 	 */
 	@Override
@@ -195,10 +198,44 @@ public class SmartDriver extends RemoteWebDriver {
 		driver.get(url);
 	}
 
+	public WebElement findElement(By locator, String elementName)
+	{
+		if (elementName == null) {
+			elementName = String.format("element_name_by_locator_%s", locator.toString().replace('.', '_').replace(' ', '_'));
+		}
+		try
+		{
+			WebElement driverElement = driver.findElement(locator);
+			if (driverElement != null)
+			{
+				String key = uploadScreenshotIfNecessary(elementName);
+				if (key != null) {
+					updateElement(driverElement, key, elementName, true);
+				}
+			}
+			return driverElement;
+		}
+		catch (Throwable x)
+		{
+			log.info(MessageFormatter.format("Element '{}' was not found by Selenium, trying with Smartdriver...", elementName).getMessage());
+
+			ClassifyResult result = classify(elementName);
+			if (result.e != null) {
+				return result.e;
+			} else {
+				log.error(result.msg);
+			}
+
+			log.error(MessageFormatter.format("Smartdriver was also unable to find the element with name '{}'", elementName).getMessage());
+
+			throw x;
+		}
+	}
+
 	@Override
 	public WebElement findElement(By locator)
 	{
-		return driver.findElement(locator);
+		return findElement(locator, null);
 	}
 
 	@Override
@@ -347,7 +384,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find an element by class name.
-	 * 
+	 *
 	 * @param using The class name of the element to find
 	 * @param elementName The label name of the element to be classified. Optional, set {@code null} to auto generate an element name.
 	 * @return The element that was found. Raises an exception otherwise.
@@ -359,7 +396,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find an element by class name.
-	 * 
+	 *
 	 * @param using The class name of the element to find
 	 * @return The element that was found. Raises an exception otherwise.
 	 */
@@ -371,7 +408,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find all elements with the matching class name.
-	 * 
+	 *
 	 * @param using The class name of the elements to find.
 	 * @return A {@code List} with any elements that were found, or an empty {@code List} if no matches were found.
 	 */
@@ -383,7 +420,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find an element by css selector.
-	 * 
+	 *
 	 * @param using The css selector of the element to find
 	 * @param elementName The label name of the element to be classified. Optional, set {@code null} to auto generate an element name.
 	 * @return The element that was found. Raises an exception otherwise.
@@ -395,7 +432,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find an element by css selector.
-	 * 
+	 *
 	 * @param using The css selector of the element to find
 	 * @return The element that was found. Raises an exception otherwise.
 	 */
@@ -407,7 +444,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find all elements with the matching css selector.
-	 * 
+	 *
 	 * @param using The css selector of the elements to find.
 	 * @return A {@code List} with any elements that were found, or an empty {@code List} if no matches were found.
 	 */
@@ -419,7 +456,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find an element by id.
-	 * 
+	 *
 	 * @param using The id of the element to find
 	 * @param elementName The label name of the element to be classified. Optional, set {@code null} to auto generate an element name.
 	 * @return The element that was found. Raises an exception otherwise.
@@ -431,7 +468,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find an element by id.
-	 * 
+	 *
 	 * @param using The id of the element to find
 	 * @return The element that was found. Raises an exception otherwise.
 	 */
@@ -443,7 +480,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find all elements with the matching id.
-	 * 
+	 *
 	 * @param using The id of the elements to find.
 	 * @return A {@code List} with any elements that were found, or an empty {@code List} if no matches were found.
 	 */
@@ -455,7 +492,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find an element by link text.
-	 * 
+	 *
 	 * @param using The link text of the element to find
 	 * @param elementName The label name of the element to be classified. Optional, set {@code null} to auto generate an element name.
 	 * @return The element that was found. Raises an exception otherwise.
@@ -467,7 +504,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find an element by link text.
-	 * 
+	 *
 	 * @param using The link text of the element to find
 	 * @return The element that was found. Raises an exception otherwise.
 	 */
@@ -479,7 +516,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find all elements with the matching link text.
-	 * 
+	 *
 	 * @param using The link text of the elements to find.
 	 * @return A {@code List} with any elements that were found, or an empty {@code List} if no matches were found.
 	 */
@@ -491,7 +528,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find an element by name.
-	 * 
+	 *
 	 * @param using The name of the element to find
 	 * @param elementName The label name of the element to be classified. Optional, set {@code null} to auto generate an element name.
 	 * @return The element that was found. Raises an exception otherwise.
@@ -503,7 +540,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find an element by name.
-	 * 
+	 *
 	 * @param using The name of the element to find
 	 * @return The element that was found. Raises an exception otherwise.
 	 */
@@ -515,7 +552,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find all elements with the matching name.
-	 * 
+	 *
 	 * @param using The name of the elements to find.
 	 * @return A {@code List} with any elements that were found, or an empty {@code List} if no matches were found.
 	 */
@@ -527,7 +564,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find an element by partial link text.
-	 * 
+	 *
 	 * @param using The partial link text of the element to find
 	 * @param elementName The label name of the element to be classified. Optional, set {@code null} to auto generate an element name.
 	 * @return The element that was found. Raises an exception otherwise.
@@ -539,7 +576,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find an element by partial link text.
-	 * 
+	 *
 	 * @param using The partial link text of the element to find
 	 * @return The element that was found. Raises an exception otherwise.
 	 */
@@ -551,7 +588,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find all elements with the matching partial link text.
-	 * 
+	 *
 	 * @param using The partial link text of the elements to find.
 	 * @return A {@code List} with any elements that were found, or an empty {@code List} if no matches were found.
 	 */
@@ -563,7 +600,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find an element by tag name.
-	 * 
+	 *
 	 * @param using The tag name of the element to find
 	 * @param elementName The label name of the element to be classified. Optional, set {@code null} to auto generate an element name.
 	 * @return The element that was found. Raises an exception otherwise.
@@ -575,7 +612,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find an element by tag name.
-	 * 
+	 *
 	 * @param using The tag name of the element to find
 	 * @return The element that was found. Raises an exception otherwise.
 	 */
@@ -587,7 +624,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find all elements with the matching tag name.
-	 * 
+	 *
 	 * @param using The tag name of the elements to find.
 	 * @return A {@code List} with any elements that were found, or an empty {@code List} if no matches were found.
 	 */
@@ -599,7 +636,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find an element by xpath.
-	 * 
+	 *
 	 * @param using The xpath of the element to find
 	 * @param elementName The label name of the element to be classified. Optional, set {@code null} to auto generate an element name.
 	 * @return The element that was found. Raises an exception otherwise.
@@ -611,7 +648,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find an element by xpath.
-	 * 
+	 *
 	 * @param using The xpath of the element to find
 	 * @return The element that was found. Raises an exception otherwise.
 	 */
@@ -623,7 +660,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Attempts to find all elements with the matching xpath.
-	 * 
+	 *
 	 * @param using The xpath of the elements to find.
 	 * @return A {@code List} with any elements that were found, or an empty {@code List} if no matches were found.
 	 */
@@ -635,7 +672,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Finds an element by {@code elementName}. Please use {@link #findElementByElementName(String)} instead.
-	 * 
+	 *
 	 * @param elementName The label name of the element to be classified.
 	 * @return An element associated with {@code elementName}. Throws NoSuchElementException otherwise.
 	 */
@@ -647,7 +684,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Finds an element by {@code elementName}.
-	 * 
+	 *
 	 * @param elementName The label name of the element to be classified.
 	 * @return An element associated with {@code elementName}. Throws NoSuchElementException otherwise.
 	 */
@@ -774,7 +811,7 @@ public class SmartDriver extends RemoteWebDriver {
 	}
 	/**
 	 * Shared {@code findElementBy} functionality. This serves as the base logic for most find by methods exposed to the end user.
-	 * 
+	 *
 	 * @param using The search term to use when looking for an element.
 	 * @param elementName The label name of the element to be classified. This is what the element will be stored under in the dev-tools.ai db.
 	 * @param shortcode The short identifier for the type of lookup being performed. This will be used to aut-generate an {@code elementName} if the user did not specify one.
@@ -817,7 +854,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Updates the entry for an element as it is known to the dev-tools.ai servers.
-	 * 
+	 *
 	 * @param elem The element to update
 	 * @param screenshotUUID The key associated with this element
 	 * @param elementName The name associated with this element
@@ -881,7 +918,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 	/**
 	 * Perform additional classification on an element by querying the dev-tools.ai server.
-	 * 
+	 *
 	 * @param elementName The name of the element to run classification on.
 	 * @return The result of the classification.
 	 */
@@ -984,7 +1021,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 		/**
 		 * Constructor, creates a new ClassifyResult.
-		 * 
+		 *
 		 * @param e The SmartDriverElement to to use
 		 * @param key The key to use
 		 * @param msg The message to associate with this result
@@ -998,7 +1035,7 @@ public class SmartDriver extends RemoteWebDriver {
 
 		/**
 		 * Constructor, creates a new ClassifyResult, where the {@code msg} is set to the empty String by default.
-		 * 
+		 *
 		 * @param e
 		 * @param key
 		 */

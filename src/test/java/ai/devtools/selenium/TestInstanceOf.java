@@ -38,7 +38,7 @@ public class TestInstanceOf {
          */
         WebDriverManager.chromedriver().setup();
         ChromeOptions options = new ChromeOptions();
-        //options.addArguments("--headless"); uncomment if you want headless
+        options.addArguments("--headless"); //comment if you want to see the driver
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
         options.addArguments("window-size=1280x1024");

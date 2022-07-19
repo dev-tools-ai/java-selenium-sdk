@@ -38,7 +38,7 @@ tasks.register('debug'){
 description="${project.name} build script"
 group="ai.dev-tools"
 archivesBaseName = "ai-devtools-selenium"
-version = "0.1.6"
+version = "0.1.7"
 
 repositories {
     mavenLocal()
@@ -55,6 +55,8 @@ dependencies {
     implementation 'org.apache.logging.log4j:log4j-api:2.17.1'
     implementation 'log4j:log4j:1.2.17'
     implementation 'junit:junit:4.13.1'
+
+    api "org.slf4j:slf4j-simple:1.7.9"
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.7.2'
     testImplementation "org.mockito:mockito-core:3.+"
@@ -91,7 +93,7 @@ publishing {
         maven(MavenPublication) {
             groupId = 'ai.dev-tools'
             artifactId = 'ai-devtools-selenium'
-            version = "0.1.6"
+            version = "0.1.7"
             from components.java
 
             pom {
