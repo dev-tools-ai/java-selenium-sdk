@@ -47,7 +47,7 @@ public class SmartDriver extends RemoteWebDriver {
 	/**
 	 * The current version of the SDK
 	 */
-	private static String SDK_VERSION = "0.1.0";
+	private static String SDK_VERSION = "0.1.8";
 
 	/**
 	 * The logger for this class
