@@ -61,7 +61,7 @@ public class BasicCrawl  {
             Thread.sleep(2000);
 
             WebElement paintersHeader = driver.findElementByXPath("//h1[contains(text(),'Painters')]");
-            verify(driver, Mockito.times(1)).updateElement(Mockito.any(), Mockito.anyString(), Mockito.eq("element_name_by_xpath_//h1[contains(text(),'Painters')]"), Mockito.anyBoolean());
+            verify(driver, Mockito.times(1)).updateElement(Mockito.any(), Mockito.anyString(), Mockito.eq("element_name_by_locator_By_xpath:_//h1[contains(text(),'Painters')]"), Mockito.anyBoolean());
             assert (paintersHeader.isDisplayed());
             driver.get("https://stopa.io");
 
@@ -69,13 +69,13 @@ public class BasicCrawl  {
             Thread.sleep(2000);
 
             WebElement clojureLink = driver.findElementByXPath("//a[contains(text(),'bad_selector')]");
-            verify(driver, Mockito.times(1)).classify(Mockito.eq("element_name_by_xpath_//a[contains(text(),'bad_selector')]"));
+            verify(driver, Mockito.times(1)).classify(Mockito.eq("element_name_by_locator_By_xpath:_//a[contains(text(),'bad_selector')]"));
             assert (clojureLink.isDisplayed());
             out = outContent.toString();
-            assert(out.contains("Element 'element_name_by_xpath_//a[contains(text(),'bad_selector')]' was not found by Selenium, trying with Smartdriver...") &&
-                    ( out.contains("Screenshot exists. Found element on screenshot for element_name_by_xpath_//a[contains(text(),'bad_selector')]") ||
-                            out.contains("Cache hit for element_name_by_xpath_//a[contains(text(),'bad_selector')] ") ||
-                            out.contains("Successful classification of element_name_by_xpath_//a[contains(text(),'bad_selector')]") ));
+            assert(out.contains("Element 'element_name_by_locator_By_xpath:_//a[contains(text(),'bad_selector')]' was not found by Selenium, trying with Smartdriver...") &&
+                    ( out.contains("Screenshot exists. Found element on screenshot for element_name_by_locator_By_xpath:_//a[contains(text(),'bad_selector')]") ||
+                            out.contains("Cache hit for element_name_by_locator_By_xpath:_//a[contains(text(),'bad_selector')] ") ||
+                            out.contains("Successful classification of element_name_by_locator_By_xpath:_//a[contains(text(),'bad_selector')]") ));
             clojureLink.click();
             Thread.sleep(2000);
 

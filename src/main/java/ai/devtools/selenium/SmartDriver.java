@@ -12,15 +12,12 @@ import java.util.logging.Level;
 import javax.imageio.ImageIO;
 
 import com.google.gson.JsonNull;
-import org.apache.log4j.PropertyConfigurator;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Capabilities;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.Rectangle;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.interactions.Keyboard;
-import org.openqa.selenium.interactions.Mouse;
 import org.openqa.selenium.interactions.Sequence;
 import org.openqa.selenium.remote.CommandExecutor;
 import org.openqa.selenium.remote.ErrorHandler;
@@ -47,7 +44,7 @@ public class SmartDriver extends RemoteWebDriver {
 	/**
 	 * The current version of the SDK
 	 */
-	private static String SDK_VERSION = "0.1.8";
+	private static String SDK_VERSION = "0.1.9";
 
 	/**
 	 * The logger for this class
@@ -275,18 +272,6 @@ public class SmartDriver extends RemoteWebDriver {
 	}
 
 	@Override
-	public Keyboard getKeyboard()
-	{
-		return driver.getKeyboard();
-	}
-
-	@Override
-	public Mouse getMouse()
-	{
-		return driver.getMouse();
-	}
-
-	@Override
 	public String getPageSource()
 	{
 		return driver.getPageSource();
@@ -391,7 +376,7 @@ public class SmartDriver extends RemoteWebDriver {
 	 */
 	public WebElement findElementByClassName(String using, String elementName)
 	{
-		return findElementByGeneric(using, elementName, "class_name", driver::findElementByClassName);
+		return this.findElement(By.className(using), elementName);
 	}
 
 	/**
@@ -400,7 +385,6 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param using The class name of the element to find
 	 * @return The element that was found. Raises an exception otherwise.
 	 */
-	@Override
 	public WebElement findElementByClassName(String using)
 	{
 		return findElementByClassName(using, null);
@@ -412,10 +396,9 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param using The class name of the elements to find.
 	 * @return A {@code List} with any elements that were found, or an empty {@code List} if no matches were found.
 	 */
-	@Override
 	public List<WebElement> findElementsByClassName(String using)
 	{
-		return driver.findElementsByClassName(using);
+		return driver.findElements(By.className(using));
 	}
 
 	/**
@@ -427,7 +410,7 @@ public class SmartDriver extends RemoteWebDriver {
 	 */
 	public WebElement findElementByCssSelector(String using, String elementName)
 	{
-		return findElementByGeneric(using, elementName, "class_name", driver::findElementByCssSelector);
+		return this.findElement(By.cssSelector(using), elementName);
 	}
 
 	/**
@@ -436,7 +419,6 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param using The css selector of the element to find
 	 * @return The element that was found. Raises an exception otherwise.
 	 */
-	@Override
 	public WebElement findElementByCssSelector(String using)
 	{
 		return findElementByCssSelector(using, null);
@@ -448,10 +430,9 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param using The css selector of the elements to find.
 	 * @return A {@code List} with any elements that were found, or an empty {@code List} if no matches were found.
 	 */
-	@Override
 	public List<WebElement> findElementsByCssSelector(String using)
 	{
-		return driver.findElementsByCssSelector(using);
+		return driver.findElements(By.cssSelector(using));
 	}
 
 	/**
@@ -463,7 +444,7 @@ public class SmartDriver extends RemoteWebDriver {
 	 */
 	public WebElement findElementById(String using, String elementName)
 	{
-		return findElementByGeneric(using, elementName, "class_name", driver::findElementById);
+		return findElement(By.id(using), elementName);
 	}
 
 	/**
@@ -472,7 +453,6 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param using The id of the element to find
 	 * @return The element that was found. Raises an exception otherwise.
 	 */
-	@Override
 	public WebElement findElementById(String using)
 	{
 		return findElementById(using, null);
@@ -484,10 +464,9 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param using The id of the elements to find.
 	 * @return A {@code List} with any elements that were found, or an empty {@code List} if no matches were found.
 	 */
-	@Override
 	public List<WebElement> findElementsById(String using)
 	{
-		return driver.findElementsById(using);
+		return driver.findElements(By.id(using));
 	}
 
 	/**
@@ -499,7 +478,7 @@ public class SmartDriver extends RemoteWebDriver {
 	 */
 	public WebElement findElementByLinkText(String using, String elementName)
 	{
-		return findElementByGeneric(using, elementName, "class_name", driver::findElementByLinkText);
+		return findElement(By.linkText(using), elementName);
 	}
 
 	/**
@@ -508,7 +487,6 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param using The link text of the element to find
 	 * @return The element that was found. Raises an exception otherwise.
 	 */
-	@Override
 	public WebElement findElementByLinkText(String using)
 	{
 		return findElementByLinkText(using, null);
@@ -520,10 +498,9 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param using The link text of the elements to find.
 	 * @return A {@code List} with any elements that were found, or an empty {@code List} if no matches were found.
 	 */
-	@Override
 	public List<WebElement> findElementsByLinkText(String using)
 	{
-		return driver.findElementsByLinkText(using);
+		return driver.findElements(By.linkText(using));
 	}
 
 	/**
@@ -535,7 +512,7 @@ public class SmartDriver extends RemoteWebDriver {
 	 */
 	public WebElement findElementByName(String using, String elementName)
 	{
-		return findElementByGeneric(using, elementName, "name", driver::findElementByName);
+		return findElement(By.name(using), elementName);
 	}
 
 	/**
@@ -544,7 +521,6 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param using The name of the element to find
 	 * @return The element that was found. Raises an exception otherwise.
 	 */
-	@Override
 	public WebElement findElementByName(String using)
 	{
 		return findElementByName(using, null);
@@ -556,10 +532,9 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param using The name of the elements to find.
 	 * @return A {@code List} with any elements that were found, or an empty {@code List} if no matches were found.
 	 */
-	@Override
 	public List<WebElement> findElementsByName(String using)
 	{
-		return driver.findElementsByName(using);
+		return driver.findElements(By.name(using));
 	}
 
 	/**
@@ -571,7 +546,7 @@ public class SmartDriver extends RemoteWebDriver {
 	 */
 	public WebElement findElementByPartialLinkText(String using, String elementName)
 	{
-		return findElementByGeneric(using, elementName, "name", driver::findElementByPartialLinkText);
+		return findElement(By.partialLinkText(using), elementName);
 	}
 
 	/**
@@ -580,7 +555,6 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param using The partial link text of the element to find
 	 * @return The element that was found. Raises an exception otherwise.
 	 */
-	@Override
 	public WebElement findElementByPartialLinkText(String using)
 	{
 		return findElementByPartialLinkText(using, null);
@@ -592,10 +566,9 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param using The partial link text of the elements to find.
 	 * @return A {@code List} with any elements that were found, or an empty {@code List} if no matches were found.
 	 */
-	@Override
 	public List<WebElement> findElementsByPartialLinkText(String using)
 	{
-		return driver.findElementsByPartialLinkText(using);
+		return driver.findElements(By.partialLinkText(using));
 	}
 
 	/**
@@ -607,7 +580,7 @@ public class SmartDriver extends RemoteWebDriver {
 	 */
 	public WebElement findElementByTagName(String using, String elementName)
 	{
-		return findElementByGeneric(using, elementName, "name", driver::findElementByTagName);
+		return findElement(By.tagName(using), elementName);
 	}
 
 	/**
@@ -616,7 +589,6 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param using The tag name of the element to find
 	 * @return The element that was found. Raises an exception otherwise.
 	 */
-	@Override
 	public WebElement findElementByTagName(String using)
 	{
 		return findElementByTagName(using, null);
@@ -628,10 +600,9 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param using The tag name of the elements to find.
 	 * @return A {@code List} with any elements that were found, or an empty {@code List} if no matches were found.
 	 */
-	@Override
 	public List<WebElement> findElementsByTagName(String using)
 	{
-		return driver.findElementsByTagName(using);
+		return driver.findElements(By.tagName(using));
 	}
 
 	/**
@@ -643,7 +614,7 @@ public class SmartDriver extends RemoteWebDriver {
 	 */
 	public WebElement findElementByXPath(String using, String elementName)
 	{
-		return findElementByGeneric(using, elementName, "xpath", driver::findElementByXPath);
+		return findElement(By.xpath(using), elementName);
 	}
 
 	/**
@@ -652,7 +623,6 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param using The xpath of the element to find
 	 * @return The element that was found. Raises an exception otherwise.
 	 */
-	@Override
 	public WebElement findElementByXPath(String using)
 	{
 		return findElementByXPath(using, null);
@@ -664,10 +634,9 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param using The xpath of the elements to find.
 	 * @return A {@code List} with any elements that were found, or an empty {@code List} if no matches were found.
 	 */
-	@Override
 	public List<WebElement> findElementsByXPath(String using)
 	{
-		return driver.findElementsByXPath(using);
+		return driver.findElements(By.xpath(using));
 	}
 
 	/**
@@ -676,7 +645,6 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param elementName The label name of the element to be classified.
 	 * @return An element associated with {@code elementName}. Throws NoSuchElementException otherwise.
 	 */
-	@Deprecated
 	public WebElement findByElementName(String elementName)
 	{
 		return findElementByElementName(elementName);

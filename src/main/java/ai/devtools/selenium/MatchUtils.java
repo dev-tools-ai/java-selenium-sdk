@@ -7,10 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.Rectangle;
-import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,7 +40,7 @@ class MatchUtils
 		newBox.put("width", boundingBox.get("width").getAsDouble() / driver.multiplier);
 		newBox.put("height", boundingBox.get("height").getAsDouble() / driver.multiplier);
 
-		List<WebElement> elements = driver.driver.findElementsByXPath("//*");
+		List<WebElement> elements = driver.driver.findElements(By.xpath("//*"));
 		List<Double> iouScores = new ArrayList<>();
 
 		for (WebElement e : elements)
