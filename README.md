@@ -21,17 +21,19 @@ Add the following line(s) to the dependencies section in your
 **pom.xml (Maven)**
 
 ```xml
+<dependencies>
+    <dependency>
+        <groupId>ai.dev-tools</groupId>
+        <artifactId>ai-devtools-selenium</artifactId>
+        <version>LATEST</version>
+    </dependency>
+</dependencies>
 
-<dependency>
-    <groupId>ai.dev-tools</groupId>
-    <artifactId>devtools-ai-selenium</artifactId>
-    <version>0.1.7</version>
-</dependency>
 ````
 
 **build.gradle (Gradle)**
 ```groovy
-implementation 'ai.devtools:devtools-ai-selenium:0.1.7'
+implementation 'ai.dev-tools:ai-devtools-selenium:+'
 ```
 
 ## Tutorial
