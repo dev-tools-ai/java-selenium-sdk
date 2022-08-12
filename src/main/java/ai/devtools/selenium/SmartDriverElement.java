@@ -60,24 +60,30 @@ public class SmartDriverElement extends RemoteWebElement
 	 */
 	private String tagName;
 
+	SmartDriverElement(JsonObject elem, SmartDriver driver) {
+		this(elem, driver, 0);
+	}
+
 	/**
 	 * Constructor, creates a new SmartDriverElement
-	 * 
+	 *
 	 * @param elem The element data returned by the FD API, as JSON
 	 * @param driver The {@code SmartDriver} to associate with this {@code SmartDriverElement}.
 	 */
-	SmartDriverElement(JsonObject elem, SmartDriver driver)
+	SmartDriverElement(JsonObject elem, SmartDriver driver, float page_offset)
 	{
 		log.debug("Creating new SmartDriverElement w/ {}", elem);
 
 		this.driver = driver.driver;
+		int pageY = elem.get("y").getAsInt();
+		elem.remove("y");
+		elem.addProperty("y", pageY + page_offset * driver.multiplier);
 		this.realElement = MatchUtils.matchBoundingBoxToSeleniumElement(elem, driver);
 
 		text = JsonUtils.stringFromJson(elem, "text");
-		size = new Dimension(JsonUtils.intFromJson(elem, "width") / (int) driver.multiplier, JsonUtils.intFromJson(elem, "height") / (int) driver.multiplier);
+		size = new Dimension(JsonUtils.intFromJson(elem, "width") / Math.max((int) driver.multiplier, 1), JsonUtils.intFromJson(elem, "height") / Math.max((int) driver.multiplier, 1));
 
-		location = new Point(JsonUtils.intFromJson(elem, "x") / (int) driver.multiplier, JsonUtils.intFromJson(elem, "y") / (int) driver.multiplier);
-
+		location = new Point(JsonUtils.intFromJson(elem, "x") / Math.max((int) driver.multiplier, 1), JsonUtils.intFromJson(elem, "y") / Math.max((int) driver.multiplier, 1));
 		// this.property = property //TODO: not referenced/implemented on python side??
 		rectangle = new Rectangle(location, size);
 		tagName = JsonUtils.stringFromJson(elem, "class");

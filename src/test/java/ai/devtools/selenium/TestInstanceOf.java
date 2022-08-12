@@ -62,6 +62,7 @@ public class TestInstanceOf {
         boolean isInstanceOfWebDriver = baseDriver instanceof WebDriver;
         assert (isInstanceOfSmartDriver);
         assert (isInstanceOfWebDriver);
+        chromeDriver.quit();
     }
 }
 

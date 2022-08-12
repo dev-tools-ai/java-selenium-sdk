@@ -1,5 +1,6 @@
 package ai.devtools.selenium;
 
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URLEncoder;
@@ -12,12 +13,8 @@ import java.util.logging.Level;
 import javax.imageio.ImageIO;
 
 import com.google.gson.JsonNull;
-import org.openqa.selenium.By;
-import org.openqa.selenium.Capabilities;
+import org.openqa.selenium.*;
 import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.OutputType;
-import org.openqa.selenium.Rectangle;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Sequence;
 import org.openqa.selenium.remote.CommandExecutor;
 import org.openqa.selenium.remote.ErrorHandler;
@@ -87,8 +84,14 @@ public class SmartDriver extends RemoteWebDriver {
 	 * The screen density multiplier
 	 */
 	double multiplier;
+	private Dimension windowSize;
+	private Dimension imSize;
 	private Boolean useClassifierDuringCreation;
 	private Boolean testCaseCreationMode;
+
+	private String refScreenshotUUID;
+	private float pageOffset;
+	private float previousPageOffset;
 
 	/**
 	 * Constructor, creates a new SmartDriver.
@@ -127,10 +130,13 @@ public class SmartDriver extends RemoteWebDriver {
 		this.serverURL = HttpUrl.parse(baseUrl != null ? baseUrl : Objects.requireNonNullElse(System.getenv("DEVTOOLSAI_URL"), prodUrl));
 
 		client = this.serverURL.equals(HttpUrl.parse("https://smartdriver.dev-tools.ai")) ? NetUtils.unsafeClient() : NetUtils.basicClient().build();
-		multiplier = 1.0 * ImageIO.read(driver.getScreenshotAs(OutputType.FILE)).getWidth() / driver.manage().window().getSize().width;
+
+		windowSize = driver.manage().window().getSize();
+		BufferedImage im = ImageIO.read(driver.getScreenshotAs(OutputType.FILE));
+		imSize = new Dimension(im.getWidth(), im.getHeight());
+		multiplier = 1.0 * imSize.width / windowSize.width;
 
 		log.debug("The screen multiplier is " + multiplier);
-
 		try
 		{
 			JsonObject payload = CollectionUtils.keyValuesToJO("api_key", apiKey, "os",
@@ -205,7 +211,7 @@ public class SmartDriver extends RemoteWebDriver {
 			WebElement driverElement = driver.findElement(locator);
 			if (driverElement != null)
 			{
-				String key = uploadScreenshotIfNecessary(elementName);
+				String key = uploadScreenshotIfNecessary(elementName, driverElement);
 				if (key != null) {
 					updateElement(driverElement, key, elementName, true);
 				}
@@ -736,13 +742,47 @@ public class SmartDriver extends RemoteWebDriver {
 		}
 	}
 
-	private String uploadScreenshotIfNecessary(String elementName)	{
+	public void scrollToElement(WebElement element, Boolean scrollUp) {
+		if(scrollUp) {
+			((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(false);", element);
+		} else {
+			((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", element);
+		}
+	}
+
+	public void scrollPage(int amount) {
+		((JavascriptExecutor) driver).executeScript("window.scrollBy(0, " + amount + ")");
+	}
+
+	private String uploadScreenshotIfNecessary(String elementName, WebElement element)	{
 		Boolean isElementFrozen = checkIfFrozen(elementName);
 		if (isElementFrozen) {
 			return null;
 		} else {
 			String screenshotBase64 = driver.getScreenshotAs(OutputType.BASE64);
 			String screenshotUUID = getScreenshotHash(screenshotBase64);
+			refScreenshotUUID = null;
+			pageOffset = 0f;
+			if (element != null) {
+				pageOffset = getPageOffset();
+				Boolean needsToScroll = (element.getRect().getY() > (windowSize.getHeight() + pageOffset)) || (element.getRect().getY() < pageOffset);
+				if(needsToScroll) {
+					previousPageOffset = pageOffset;
+					refScreenshotUUID = screenshotUUID;
+
+					scrollToElement(element, element.getRect().getY() < pageOffset);
+					try {
+						Thread.sleep(200);
+					} catch (InterruptedException e) {
+					}
+					screenshotBase64 = driver.getScreenshotAs(OutputType.BASE64);
+					screenshotUUID = getScreenshotHash(screenshotBase64);
+					pageOffset = getPageOffset();
+					scrollPage((int) (previousPageOffset - pageOffset));
+				}
+			}
+
+
 			JsonObject screenshotExistsResponse = checkScreenshotExists(screenshotUUID, elementName);
 			if (screenshotExistsResponse != null && screenshotExistsResponse.get("exists_screenshot").getAsBoolean()) {
 				return screenshotUUID;
@@ -796,7 +836,7 @@ public class SmartDriver extends RemoteWebDriver {
 			WebElement driverElement = fn.apply(using);
 			if (driverElement != null)
 			{
-				String key = uploadScreenshotIfNecessary(elementName);
+				String key = uploadScreenshotIfNecessary(elementName, driverElement);
 				if (key != null) {
 					updateElement(driverElement, key, elementName, true);
 				}
@@ -843,6 +883,8 @@ public class SmartDriver extends RemoteWebDriver {
 		payload.addProperty("height", rect.height * multiplier);
 		payload.addProperty("multiplier", multiplier);
 		payload.addProperty("test_case_name", testCaseName);
+		payload.addProperty("page_offset", this.pageOffset * this.multiplier);
+		payload.addProperty("ref_screenshot_uuid", this.refScreenshotUUID);
 
 		try {
 			JsonUtils.responseAsJson(NetUtils.basicPOST(client, serverURL, "add_action_info", payload));
@@ -899,7 +941,7 @@ public class SmartDriver extends RemoteWebDriver {
 				lastTestCaseScreenshotUUID = res.get("screenshot_uuid").getAsString();
 				JsonObject boxResponse = getTCBox(elementName);
 				if (boxResponse != null && boxResponse.get("success").getAsBoolean() && boxResponse.get("predicted_element") != JsonNull.INSTANCE) {
-					return new ClassifyResult(new SmartDriverElement(boxResponse.get("predicted_element").getAsJsonObject(), this), lastTestCaseScreenshotUUID);
+					return new ClassifyResult(new SmartDriverElement(boxResponse.get("predicted_element").getAsJsonObject(), this, getPageOffset()), lastTestCaseScreenshotUUID);
 				} else {
 					// label_url = self.url + '/testcase/label?test_case_name=' + urllib.parse.quote(self.test_case_uuid)
 					String labelUrl = serverURL + "/testcase/label?test_case_name=" + URLEncoder.encode(testCaseName);
@@ -907,7 +949,7 @@ public class SmartDriver extends RemoteWebDriver {
 					while (true) {
 						boxResponse = getTCBox(elementName);
 						if (boxResponse != null && boxResponse.get("success").getAsBoolean() && boxResponse.get("predicted_element") != JsonNull.INSTANCE) {
-							return new ClassifyResult(new SmartDriverElement(boxResponse.get("predicted_element").getAsJsonObject(), this), lastTestCaseScreenshotUUID);
+							return new ClassifyResult(new SmartDriverElement(boxResponse.get("predicted_element").getAsJsonObject(), this, getPageOffset()), lastTestCaseScreenshotUUID);
 						}
 						try {
 							Thread.sleep(2000);
@@ -927,36 +969,52 @@ public class SmartDriver extends RemoteWebDriver {
 				String screenshotBase64 = driver.getScreenshotAs(OutputType.BASE64);
 				String screenshotUUID = getScreenshotHash(screenshotBase64);
 				JsonObject screenshotExistsResponse = checkScreenshotExists(screenshotUUID, elementName);
+
 				if (screenshotExistsResponse != null && screenshotExistsResponse.get("success").getAsBoolean() && screenshotExistsResponse.get("predicted_element") != JsonNull.INSTANCE) {
 					msg = screenshotExistsResponse.get("message").getAsString();
 					log.info(msg);
-					return new ClassifyResult(new SmartDriverElement(screenshotExistsResponse.get("predicted_element").getAsJsonObject(), this),
-								null);
-				} else {
-					JsonObject payload = new JsonObject();
-					payload.addProperty("api_key", apiKey);
-					payload.addProperty("label", elementName);
-					payload.addProperty("screenshot", screenshotBase64);
-					payload.addProperty("test_case_name", testCaseName);
-
-					JsonObject classifyResponse = JsonUtils.responseAsJson(NetUtils.basicPOST(client, serverURL, "detect", payload));
-
-					if (!classifyResponse.get("success").getAsBoolean()) {
-						msg = classifyResponse.get("message").getAsString().replace(prodUrl, serverURL.toString());
-						return new ClassifyResult(null, key, msg);
-					} else {
-						msg = classifyResponse.get("message").getAsString().replace(prodUrl, serverURL.toString());
-						log.info(msg);
-						try {
-							return new ClassifyResult(new SmartDriverElement(classifyResponse.get("predicted_element").getAsJsonObject(), this),
-									classifyResponse.get("screenshot_uuid").getAsString());
-						} catch (Throwable e) {
-							log.error("Error creating SmartDriverElement from response");
-							e.printStackTrace();
-							return new ClassifyResult(null, key, msg);
-						}
+					float currentOffset = getPageOffset();
+					float bottomOffset = currentOffset + windowSize.height;
+					float realOffset = (float) (screenshotExistsResponse.get("page_offset").getAsFloat() / multiplier);
+					if (realOffset > bottomOffset || realOffset < currentOffset) {
+						int scrollOffset = (int) (realOffset - currentOffset);
+						// Scroll
+						scrollPage((int) scrollOffset);
+						Thread.sleep(1000);
+						screenshotBase64 = driver.getScreenshotAs(OutputType.BASE64);
+						screenshotUUID = getScreenshotHash(screenshotBase64);
+						screenshotExistsResponse = checkScreenshotExists(screenshotUUID, elementName);
+					}
+					if (screenshotExistsResponse != null && screenshotExistsResponse.get("success").getAsBoolean() && screenshotExistsResponse.get("predicted_element") != JsonNull.INSTANCE) {
+						return new ClassifyResult(new SmartDriverElement(screenshotExistsResponse.get("predicted_element").getAsJsonObject(), this, getPageOffset()), null);
 					}
 				}
+				JsonObject payload = new JsonObject();
+				payload.addProperty("api_key", apiKey);
+				payload.addProperty("label", elementName);
+				payload.addProperty("screenshot", screenshotBase64);
+				payload.addProperty("test_case_name", testCaseName);
+
+				JsonObject classifyResponse = JsonUtils.responseAsJson(NetUtils.basicPOST(client, serverURL, "detect", payload));
+
+				if (!classifyResponse.get("success").getAsBoolean()) {
+					classifyResponse = classifyFullScreen(elementName, screenshotBase64);
+					if (!classifyResponse.get("success").getAsBoolean()) {
+						log.info(classifyResponse.get("message").getAsString());
+						return new ClassifyResult(null, null, classifyResponse.get("message").getAsString());
+					}
+				}
+				msg = classifyResponse.get("message").getAsString().replace(prodUrl, serverURL.toString());
+				log.info(msg);
+				try {
+					return new ClassifyResult(new SmartDriverElement(classifyResponse.get("predicted_element").getAsJsonObject(), this, getPageOffset()),
+							classifyResponse.get("screenshot_uuid").getAsString());
+				} catch (Throwable e) {
+					log.error("Error creating SmartDriverElement from response");
+					e.printStackTrace();
+					return new ClassifyResult(null, key, msg);
+				}
+
 			} catch (Throwable e) {
 				e.printStackTrace();
 			}
@@ -964,6 +1022,52 @@ public class SmartDriver extends RemoteWebDriver {
 			log.warn(msg);
 			return new ClassifyResult(null, key, msg);
 		}
+	}
+
+	private float getPageOffset(){
+		Object res = driver.executeScript("return window.pageYOffset;");
+		if (res instanceof Number) {
+			return ((Number) res).floatValue();
+		} else {
+			return 0;
+		}
+	}
+
+	JsonObject classifyFullScreen(String elementName, String screenshotBase64) {
+		int lastOffset = -1;
+		int offset = 1;
+		int windowHeight = windowSize.height;
+		scrollPage(-100000);
+		JsonObject r = new JsonObject();
+		r.addProperty("success", false);
+
+		while(offset > lastOffset) {
+			lastOffset = offset;
+			screenshotBase64 = driver.getScreenshotAs(OutputType.BASE64);
+			JsonObject payload = new JsonObject();
+			payload.addProperty("api_key", apiKey);
+			payload.addProperty("label", elementName);
+			payload.addProperty("screenshot", screenshotBase64);
+			payload.addProperty("test_case_name", testCaseName);
+
+			try {
+				r = JsonUtils.responseAsJson(NetUtils.basicPOST(client, serverURL, "detect", payload));
+				if (r.get("success").getAsBoolean()) {
+					return r;
+				}
+			} catch (Throwable e) {
+				log.error("Error creating SmartDriverElement from response");
+				e.printStackTrace();
+				return r;
+			}
+			scrollPage((int) windowHeight);
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+			}
+			offset = (int) getPageOffset();
+		}
+		return r;
 	}
 
 	/**
