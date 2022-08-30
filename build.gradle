@@ -37,8 +37,9 @@ tasks.register('debug'){
 
 description="${project.name} build script"
 group="ai.dev-tools"
-archivesBaseName = "ai-devtools-selenium"
-version = "0.1.10"
+archivesBaseName = "ai-devtools"
+version = "0.1.12"
+
 
 repositories {
     mavenLocal()
@@ -49,12 +50,14 @@ dependencies {
     api 'com.google.code.gson:gson:2.9.0'
     api 'com.squareup.okhttp3:okhttp:4.9.3'
     api 'org.seleniumhq.selenium:selenium-java:3.141.59'
+    implementation 'io.appium:java-client:6.1.0'
 
     implementation 'io.github.bonigarcia:webdrivermanager:5.1.0'
     implementation 'io.github.bonigarcia:webdrivermanager:5.1.0'
     implementation 'org.apache.logging.log4j:log4j-api:2.17.1'
     implementation 'log4j:log4j:1.2.17'
     implementation 'junit:junit:4.13.1'
+    implementation "org.javatuples:javatuples:1.2"
 
     api "org.slf4j:slf4j-simple:1.7.9"
 
@@ -93,8 +96,8 @@ publishing {
     publications {
         maven(MavenPublication) {
             groupId = 'ai.dev-tools'
-            artifactId = 'ai-devtools-selenium'
-            version = "0.1.10"
+            artifactId = 'ai-devtools'
+            version = "0.1.12"
             from components.java
 
             pom {
@@ -147,6 +150,7 @@ artifacts {
 
 tasks.named('test') {
     useJUnitPlatform()
+    exclude '**/ai/devtools/appium/**'
 }
 
 wrapper {

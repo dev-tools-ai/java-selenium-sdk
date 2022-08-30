@@ -9,13 +9,20 @@ import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.logging.Level;
+import java.awt.Desktop;
+import java.net.URI;
 
 import javax.imageio.ImageIO;
 
+import ai.devtools.utils.CollectionUtils;
+import ai.devtools.utils.JsonUtils;
+import ai.devtools.utils.NetUtils;
+import ai.devtools.utils.Utils;
 import com.google.gson.JsonNull;
 import org.openqa.selenium.*;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.interactions.Sequence;
+import org.openqa.selenium.json.Json;
 import org.openqa.selenium.remote.CommandExecutor;
 import org.openqa.selenium.remote.ErrorHandler;
 import org.openqa.selenium.remote.FileDetector;
@@ -41,7 +48,8 @@ public class SmartDriver extends RemoteWebDriver {
 	/**
 	 * The current version of the SDK
 	 */
-	private static String SDK_VERSION = "0.1.9";
+	private static String SDK_VERSION = "selenium-0.1.12";
+
 
 	/**
 	 * The logger for this class
@@ -56,7 +64,7 @@ public class SmartDriver extends RemoteWebDriver {
 	/**
 	 * The driver used by the user that we're wrapping.
 	 */
-	RemoteWebDriver driver;
+	public RemoteWebDriver driver;
 
 	/**
 	 * The user's Smartdriver API key
@@ -83,7 +91,7 @@ public class SmartDriver extends RemoteWebDriver {
 	/**
 	 * The screen density multiplier
 	 */
-	double multiplier;
+	public double multiplier;
 	private Dimension windowSize;
 	private Dimension imSize;
 	private Boolean useClassifierDuringCreation;
@@ -92,6 +100,8 @@ public class SmartDriver extends RemoteWebDriver {
 	private String refScreenshotUUID;
 	private float pageOffset;
 	private float previousPageOffset;
+
+	private String automationName;
 
 	/**
 	 * Constructor, creates a new SmartDriver.
@@ -111,6 +121,9 @@ public class SmartDriver extends RemoteWebDriver {
 		this.testCaseName = (String) initializationDict.get("testCaseName");
 		this.useClassifierDuringCreation = (Boolean) initializationDict.get("useClassifierDuringCreation");
 		this.testCaseCreationMode = Utils.StrToBool(System.getenv("DEVTOOLSAI_INTERACTIVE"));
+
+		Object automationNameObject = driver.getCapabilities().getCapability("browserName");
+		automationName = automationNameObject == null ? "": automationNameObject.toString();
 
 		if (testCaseName == null)
 		{
@@ -141,7 +154,9 @@ public class SmartDriver extends RemoteWebDriver {
 		{
 			JsonObject payload = CollectionUtils.keyValuesToJO("api_key", apiKey, "os",
 					String.format("%s-%s-%s", System.getProperty("os.name"), System.getProperty("os.version"), System.getProperty("os.arch")), "sdk_version", SDK_VERSION, "language",
-					String.format("java-%s", System.getProperty("java.version")), "test_case_name", this.testCaseName);
+					String.format("java-%s", System.getProperty("java.version")),
+					"test_case_name", this.testCaseName,
+					"automation_name", automationName);
 			log.debug(MessageFormatter.format("Checking in with: {}", payload.toString()).toString());
 
 			JsonObject r = JsonUtils.responseAsJson(NetUtils.basicPOST(client, this.serverURL, "ping", payload));
@@ -894,20 +909,22 @@ public class SmartDriver extends RemoteWebDriver {
 		}
 	}
 
-	private JsonObject getTCBox(String elementName) {
+	private CollectionUtils.Tuple<JsonObject, Boolean> getTCBox(String elementName, String eventUUID) {
 		JsonObject payload = new JsonObject();
 		payload.addProperty("api_key", apiKey);
 		payload.addProperty("label", elementName);
 		payload.addProperty("screenshot_uuid", lastTestCaseScreenshotUUID);
 		payload.addProperty("run_classifier", useClassifierDuringCreation);
+		payload.addProperty("event_id", eventUUID);
 
 		try {
 			JsonObject res = JsonUtils.responseAsJson(NetUtils.basicPOST(client, serverURL, "testcase/get_action_info", payload));
-			return res;
+			Boolean needsReload = res.get("needs_reload").getAsBoolean();
+			return new CollectionUtils.Tuple<>(res, needsReload);
 		} catch (Throwable e) {
 			log.debug("Error getting TC box");
 			e.printStackTrace();
-			return null;
+			return new CollectionUtils.Tuple<>(null, false);
 		}
 	}
 
@@ -917,7 +934,7 @@ public class SmartDriver extends RemoteWebDriver {
 			if (os.contains("mac")) {
 				Runtime.getRuntime().exec("open " + url);
 			} else if (os.contains("windows")) {
-				Runtime.getRuntime().exec("run " + url);
+				Desktop.getDesktop().browse(new URI(url));
 			} else {
 				log.info(MessageFormatter.format("Please open the following URL in your browser: {}", url).getMessage());
 			}
@@ -939,17 +956,28 @@ public class SmartDriver extends RemoteWebDriver {
 			JsonObject res = uploadTCScreenshot(screenshotBase64, elementName);
 			if (res.get("success").getAsBoolean()) {
 				lastTestCaseScreenshotUUID = res.get("screenshot_uuid").getAsString();
-				JsonObject boxResponse = getTCBox(elementName);
+				CollectionUtils.Tuple<JsonObject, Boolean> boxResponseTp = getTCBox(elementName, null);
+				JsonObject boxResponse = boxResponseTp.k;
+				Boolean needsReload = boxResponseTp.v;
+
 				if (boxResponse != null && boxResponse.get("success").getAsBoolean() && boxResponse.get("predicted_element") != JsonNull.INSTANCE) {
 					return new ClassifyResult(new SmartDriverElement(boxResponse.get("predicted_element").getAsJsonObject(), this, getPageOffset()), lastTestCaseScreenshotUUID);
 				} else {
 					// label_url = self.url + '/testcase/label?test_case_name=' + urllib.parse.quote(self.test_case_uuid)
-					String labelUrl = serverURL + "/testcase/label?test_case_name=" + URLEncoder.encode(testCaseName);
+					// generate a uuid
+					String eventUUID = UUID.randomUUID().toString();
+					String labelUrl = serverURL + "/testcase/label?test_case_name=" + URLEncoder.encode(testCaseName) + "&event_id=" + eventUUID + "&api_key=" + apiKey;;
 					openBrowser(labelUrl);
 					while (true) {
-						boxResponse = getTCBox(elementName);
+						boxResponseTp = getTCBox(elementName, eventUUID);
+						boxResponse = boxResponseTp.k;
+						needsReload = boxResponseTp.v;
 						if (boxResponse != null && boxResponse.get("success").getAsBoolean() && boxResponse.get("predicted_element") != JsonNull.INSTANCE) {
 							return new ClassifyResult(new SmartDriverElement(boxResponse.get("predicted_element").getAsJsonObject(), this, getPageOffset()), lastTestCaseScreenshotUUID);
+						}
+						if (needsReload) {
+							screenshotBase64 = driver.getScreenshotAs(OutputType.BASE64);
+							uploadTCScreenshot(screenshotBase64, elementName);
 						}
 						try {
 							Thread.sleep(2000);
