@@ -57,7 +57,7 @@ public class SmartDriver<T extends MobileElement> {
     /**
      * The current version of the SDK
      */
-    private static String SDK_VERSION = "appium-0.1.12";
+    private static String SDK_VERSION = "appium-0.1.13";
 
     private boolean isMobileWeb = false;
     public boolean isIOS;
@@ -145,7 +145,10 @@ public class SmartDriver<T extends MobileElement> {
         //isMobileWeb = T instanceof RemoteWebElement;
 
         this.testCaseName = (String) initializationDict.get("testCaseName");
-        this.useClassifierDuringCreation = (Boolean) initializationDict.get("useClassifierDuringCreation");
+        this.useClassifierDuringCreation = true; // Default to running it because it's easier for customers
+        if (initializationDict.get("useClassifierDuringCreation") != null) {
+            this.useClassifierDuringCreation = (Boolean) initializationDict.get("useClassifierDuringCreation");
+        };
         this.testCaseCreationMode = Utils.StrToBool(System.getenv("DEVTOOLSAI_INTERACTIVE"));
 
         if (testCaseName == null)
