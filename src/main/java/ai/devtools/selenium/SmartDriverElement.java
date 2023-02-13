@@ -100,7 +100,7 @@ public class SmartDriverElement extends RemoteWebElement
 	@Override
 	public String getText()
 	{
-		return text;
+		return realElement.getText();
 	}
 
 	@Override
@@ -124,7 +124,7 @@ public class SmartDriverElement extends RemoteWebElement
 	@Override
 	public String getTagName()
 	{
-		return tagName;
+		return realElement.getTagName();
 	}
 
 	@Override

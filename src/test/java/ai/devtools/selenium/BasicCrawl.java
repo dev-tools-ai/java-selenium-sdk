@@ -42,9 +42,10 @@ public class BasicCrawl  {
         options.addArguments("window-size=1280x1024");
         ChromeDriver chromeDriver = new ChromeDriver(options);
         try {
-            String api_key = "<<get your api key at smartdriver.dev-tools.ai>>";
+            String api_key = "4bdfb52c9b77fc14ef50dcfb";
             HashMap<String, Object> config = new HashMap<String, Object>();
             config.put("testCaseName", "stopa_navigation");
+            //config.put("useFastJsChopper", true);
             SmartDriver baseDriver = new SmartDriver(chromeDriver, api_key, config);
             SmartDriver driver = Mockito.spy(baseDriver);
             driver.get("https://stopa.io");
@@ -52,6 +53,7 @@ public class BasicCrawl  {
             Thread.sleep(2000);
 
             WebElement element = driver.findByAI("link What Artists Notice");
+            String html = element.getAttribute("innerHTML");
             String out = outContent.toString();
             assert (
                     out.contains("Successful classification of link What Artists Notice") ||
@@ -104,7 +106,7 @@ public class BasicCrawl  {
         options.addArguments("window-size=1280x1024");
         ChromeDriver chromeDriver = new ChromeDriver(options);
         try {
-            String api_key = "<<get your api key at smartdriver.dev-tools.ai>>";
+            String api_key = "4bdfb52c9b77fc14ef50dcfb";
             HashMap<String, Object> config = new HashMap<String, Object>();
             config.put("testCaseName", "stopa_navigation");
             SmartDriver driver = new SmartDriver(chromeDriver, api_key, config);

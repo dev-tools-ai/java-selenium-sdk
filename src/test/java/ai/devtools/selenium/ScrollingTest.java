@@ -31,7 +31,7 @@ public class ScrollingTest  {
         options.addArguments("window-size=1280x1024");
         ChromeDriver chromeDriver = new ChromeDriver(options);
         try {
-            String api_key = "<<get your api key at smartdriver.dev-tools.ai>>";
+            String api_key = "4bdfb52c9b77fc14ef50dcfb";
             HashMap<String, Object> config = new HashMap<String, Object>();
             config.put("testCaseName", "stopa_navigation");
             SmartDriver driver = new SmartDriver(chromeDriver, api_key, config);

@@ -48,7 +48,7 @@ public class SmartDriver extends RemoteWebDriver {
 	/**
 	 * The current version of the SDK
 	 */
-	private static String SDK_VERSION = "selenium-0.1.12";
+	private static String SDK_VERSION = "selenium-0.1.14";
 
 
 	/**
@@ -103,6 +103,8 @@ public class SmartDriver extends RemoteWebDriver {
 
 	private String automationName;
 
+	public boolean UseJSChopper = false;
+
 	/**
 	 * Constructor, creates a new SmartDriver.
 	 *
@@ -119,7 +121,11 @@ public class SmartDriver extends RemoteWebDriver {
 		BasicConfigurator.configure();
 
 		this.testCaseName = (String) initializationDict.get("testCaseName");
-		this.useClassifierDuringCreation = (Boolean) initializationDict.get("useClassifierDuringCreation");
+		this.useClassifierDuringCreation = true; // Default to running it because it's easier for customers
+		this.UseJSChopper = initializationDict.get("useFastJsChopper") == null ? false : (Boolean) initializationDict.get("useFastJsChopper");
+		if (initializationDict.get("useClassifierDuringCreation") != null) {
+			this.useClassifierDuringCreation = (Boolean) initializationDict.get("useClassifierDuringCreation");
+		};
 		this.testCaseCreationMode = Utils.StrToBool(System.getenv("DEVTOOLSAI_INTERACTIVE"));
 
 		Object automationNameObject = driver.getCapabilities().getCapability("browserName");

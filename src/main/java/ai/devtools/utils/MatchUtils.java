@@ -25,6 +25,22 @@ public class MatchUtils {
 	 */
 	private static Logger log = LoggerFactory.getLogger(MatchUtils.class);
 
+	public static WebElement matchBoundingBoxToSeleniumElementJS(JsonObject boundingBox, SmartDriver driver) {
+		HashMap<String, Double> newBox = new HashMap<>();
+		newBox.put("x", boundingBox.get("x").getAsDouble() / driver.multiplier);
+		newBox.put("y", boundingBox.get("y").getAsDouble() / driver.multiplier);
+		newBox.put("width", boundingBox.get("width").getAsDouble() / driver.multiplier);
+		newBox.put("height", boundingBox.get("height").getAsDouble() / driver.multiplier);
+
+		Double centerX = newBox.get("x") + newBox.get("width") / 2;
+		Double centerY = newBox.get("y") + newBox.get("height") / 2;
+
+		WebElement element = (WebElement)((JavascriptExecutor) driver).executeScript(
+				"return document.elementFromPoint(arguments[0], arguments[1])",
+				centerX, centerY);
+		return element;
+	}
+
 	/**
 	 * Matches a bounding box returned by the dev-tools.ai API to a selenium WebElement on the current page.
 	 * 
@@ -34,6 +50,11 @@ public class MatchUtils {
 	 */
 	public static WebElement matchBoundingBoxToSeleniumElement(JsonObject boundingBox, SmartDriver driver)
 	{
+		if(driver.UseJSChopper) {
+			WebElement res = matchBoundingBoxToSeleniumElementJS(boundingBox, driver);
+			return res;
+		}
+
 		HashMap<String, Double> newBox = new HashMap<>();
 		newBox.put("x", boundingBox.get("x").getAsDouble() / driver.multiplier);
 		newBox.put("y", boundingBox.get("y").getAsDouble() / driver.multiplier);
@@ -67,7 +88,6 @@ public class MatchUtils {
 		for (Tuple<Double, WebElement> t : composite)
 			if (t.v.getTagName().equals("input") || t.v.getTagName().equals(("button")) && t.k > composite.get(0).k * 0.9)
 				return t.v;
-
 		return composite.get(0).v;
 	}
 
