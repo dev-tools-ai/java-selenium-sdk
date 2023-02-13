@@ -1,12 +1,13 @@
-[![dev-tools.ai sdk logo](https://dev-tools.ai/img/logo.svg)](https://dev-tools.ai/)
+[![dev-tools.ai sdk logo](https://docs.dev-tools.ai/img/logo.svg)](https://dev-tools.ai/)
 
 [![JDK-11+](https://img.shields.io/badge/JDK-11%2B-blue)](https://adoptium.net)
-[![Maven Central](https://img.shields.io/maven-central/v/ai.dev-tools/ai-devtools-selenium)](https://search.maven.org/artifact/ai.dev-tools/ai-devtools-selenium)
+[![javadoc](https://javadoc.io/badge2/ai.test.sdk/test-ai-selenium/javadoc.svg)](https://javadoc.io/doc/ai.test.sdk/test-ai-selenium)
+[![Maven Central](https://img.shields.io/maven-central/v/ai.test.sdk/test-ai-selenium)](https://search.maven.org/artifact/ai.test.sdk/test-ai-selenium)
 [![Apache 2.0](https://img.shields.io/badge/Apache-2.0-blue)](https://www.apache.org/licenses/LICENSE-2.0)
-[![Discord](https://img.shields.io/discord/974528356253065236?&logo=discord)](https://discord.gg/2J9WEYdq5C)
+[![Discord](https://img.shields.io/discord/853669216880295946?&logo=discord)](https://discord.gg/2J9WEYdq5C)
 [![Twitter](https://img.shields.io/twitter/follow/DevToolsAI)](https://twitter.com/DevToolsAI)
 
-The [dev-tools.ai](https://dev-tools.ai) selenium SDK is a simple library that makes it easy to write robust cross-browser web tests backed by computer vision and artificial intelligence.
+The dev-tools.ai selenium SDK is a simple library that makes it easy to write robust cross-browser web tests backed by computer vision and artificial intelligence.
 
 dev-tools.ai integrates seamelessly with your existing tests, and will act as backup if your selectors break/fail by attempting to visually (computer vision) identify elements.
 
@@ -21,19 +22,17 @@ Add the following line(s) to the dependencies section in your
 **pom.xml (Maven)**
 
 ```xml
-<dependencies>
-    <dependency>
-        <groupId>ai.dev-tools</groupId>
-        <artifactId>ai-devtools-selenium</artifactId>
-        <version>LATEST</version>
-    </dependency>
-</dependencies>
 
+<dependency>
+    <groupId>ai.dev-tools</groupId>
+    <artifactId>devtools-ai-selenium</artifactId>
+    <version>0.1.+</version>
+</dependency>
 ````
 
 **build.gradle (Gradle)**
 ```groovy
-implementation 'ai.dev-tools:ai-devtools-selenium:+'
+implementation 'ai.devtools:devtools-ai-selenium:0.1.+'
 ```
 
 ## Tutorial
@@ -41,5 +40,5 @@ We have a detailed step-by-step tutorial which will help you get set up with the
 
 ## Resources
 * [Register/Login to your dev-tools.ai account](https://smartdriver.dev-tools.ai/signup)
-* [Docs](https://dev-tools.ai/docs/get-started)
-* [Another Tutorial](https://dev-tools.ai/docs/category/tutorial---selenium)
+* [Docs](https://docs.dev-tools.ai/)
+* [Another Tutorial](https://docs.dev-tools.ai/selenium-basic-test-case)
