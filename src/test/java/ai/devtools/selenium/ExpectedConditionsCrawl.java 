@@ -1,6 +1,5 @@
 package ai.devtools.selenium;
 
-import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import io.github.bonigarcia.wdm.WebDriverManager;
@@ -27,24 +26,42 @@ public class ExpectedConditionsCrawl {
         options.addArguments("--no-sandbox");
         options.addArguments("--headless");
         options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("window-size=1280x1024");
+        options.addArguments("window-size=1600x1200");
+        options.addArguments("--force-device-scale-factor=2.0");
         ChromeDriver chromeDriver = new ChromeDriver(options);
-        String api_key = "4bdfb52c9b77fc14ef50dcfb";
+        String api_key = "<<get your api key at smartdriver.dev-tools.ai>>";
         HashMap<String, Object> config = new HashMap<String, Object>();
-        config.put("testCaseName", "stopa_navigation");
+        config.put("testCaseName", "local_ci_test");
         SmartDriver baseDriver = new SmartDriver(chromeDriver, api_key, config);
         PropertyConfigurator.configure("log4j.properties");
         SmartDriver driver = Mockito.spy(baseDriver);
-        driver.get("https://stopa.io");
+        driver.get("http://localhost:5005/index.html");
 
         Thread.sleep(2000);
 
         WebDriverWait wait = new WebDriverWait(driver, 10);
-        By elem_dynamic = By.xpath("//a[text()='What Gödel Discovered']");
+        By why_change_dynamic = By.ai("el_why_change", 0.99f);
+        wait.until(ExpectedConditions.presenceOfElementLocated(why_change_dynamic));
+
+        WebElement element = driver.findElement(why_change_dynamic);
+        element.click();
+        Thread.sleep(2000);
+        System.out.println("Should be on never gonna give you up page");
+        // "Never gonna give you up" should be in page source
+        assert driver.getPageSource().contains("Never gonna give you up");
+        Thread.sleep(2000);
+
+
+        driver.get("http://localhost:5005/index.html");
+
+        wait = new WebDriverWait(driver, 10);
+        org.openqa.selenium.By elem_dynamic = By.xpath("//a[text()='Antifragility']");
         wait.until(ExpectedConditions.presenceOfElementLocated(elem_dynamic));
 
-        WebElement element = driver.findByAI("some_link");
+        element = driver.findByAI("el_some_link");
         element.click();
+
+
         driver.quit();
     }
 }

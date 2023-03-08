@@ -57,7 +57,7 @@ public class SmartDriver<T extends MobileElement> {
     /**
      * The current version of the SDK
      */
-    private static String SDK_VERSION = "appium-0.1.13";
+    private static String SDK_VERSION = "appium-0.1.16";
 
     private boolean isMobileWeb = false;
     public boolean isIOS;
@@ -826,6 +826,7 @@ public class SmartDriver<T extends MobileElement> {
         payload.addProperty("api_key", apiKey);
         payload.addProperty("label", elementName);
         payload.addProperty("screenshot_uuid", screenshotUUID);
+        payload.add("stack_trace", Utils.collectStackTrace());
         try {
             JsonObject res = JsonUtils.responseAsJson(NetUtils.basicPOST(client, serverURL, "exists_screenshot", payload));
             return res;
@@ -1034,6 +1035,7 @@ public class SmartDriver<T extends MobileElement> {
         payload.addProperty("screenshot_uuid", lastTestCaseScreenshotUUID);
         payload.addProperty("run_classifier", useClassifierDuringCreation);
         payload.addProperty("event_id", eventUUID);
+        payload.add("stack_trace", Utils.collectStackTrace());
         Boolean needsReload = false;
 
         try {
@@ -1143,6 +1145,7 @@ public class SmartDriver<T extends MobileElement> {
                 payload.addProperty("label", elementName);
                 payload.addProperty("screenshot", screenshotBase64);
                 payload.addProperty("test_case_name", testCaseName);
+                payload.add("stack_trace", Utils.collectStackTrace());
 
                 JsonObject classifyResponse = JsonUtils.responseAsJson(NetUtils.basicPOST(client, serverURL, "detect", payload));
 
@@ -1201,6 +1204,7 @@ public class SmartDriver<T extends MobileElement> {
             payload.addProperty("label", elementName);
             payload.addProperty("screenshot", screenshotBase64);
             payload.addProperty("test_case_name", testCaseName);
+            payload.add("stack_trace", Utils.collectStackTrace());
 
             try {
                 r = JsonUtils.responseAsJson(NetUtils.basicPOST(client, serverURL, "detect", payload));

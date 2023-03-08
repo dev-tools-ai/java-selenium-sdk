@@ -28,23 +28,24 @@ public class ScrollingTest  {
         options.addArguments("--headless");
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("window-size=1280x1024");
+        options.addArguments("window-size=1600x1200");
+        options.addArguments("--force-device-scale-factor=2.0");
         ChromeDriver chromeDriver = new ChromeDriver(options);
         try {
             String api_key = "<<get your api key at smartdriver.dev-tools.ai>>";
             HashMap<String, Object> config = new HashMap<String, Object>();
-            config.put("testCaseName", "stopa_navigation");
+            config.put("testCaseName", "local_ci_test");
             SmartDriver driver = new SmartDriver(chromeDriver, api_key, config);
-            driver.get("https://stopa.io");
+            driver.get("http://localhost:5005/index.html");
             // scroll down
-            driver.scrollPage(100000);
+            driver.scrollPage(0);
             Thread.sleep(2000);
 
             // Find an element mid way through the page
-            WebElement element = driver.findByAI("element_name_by_locator_By_partialLinkText:_How_to_Pick_a_Language");
+            WebElement element = driver.findByAI("el_why_change", 0.95f);
             element.click();
             Thread.sleep(2000);
-            assert(driver.getPageSource().contains("Start with Constraints"));
+            assert(driver.getPageSource().contains("Never gonna give you up"));
         } finally {
             chromeDriver.quit();
         }

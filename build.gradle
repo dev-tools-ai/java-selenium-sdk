@@ -8,12 +8,10 @@ plugins {
 }
 
 task javadocJar(type: Jar) {
-    classifier = 'javadoc'
     from javadoc
 }
 
 task sourcesJar(type: Jar) {
-    classifier = 'sources'
     from sourceSets.main.allSource
 }
 
@@ -38,7 +36,7 @@ tasks.register('debug'){
 description="${project.name} build script"
 group="ai.dev-tools"
 archivesBaseName = "ai-devtools"
-version = "0.1.13"
+version = "0.1.16"
 
 
 repositories {
@@ -58,7 +56,6 @@ dependencies {
     implementation 'log4j:log4j:1.2.17'
     implementation 'junit:junit:4.13.1'
     implementation "org.javatuples:javatuples:1.2"
-
     api "org.slf4j:slf4j-simple:1.7.9"
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.7.2'
@@ -97,7 +94,7 @@ publishing {
         maven(MavenPublication) {
             groupId = 'ai.dev-tools'
             artifactId = 'ai-devtools'
-            version = "0.1.13"
+            version = "0.1.16"
             from components.java
 
             pom {

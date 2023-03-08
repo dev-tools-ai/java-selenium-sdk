@@ -22,7 +22,6 @@ import com.google.gson.JsonNull;
 import org.openqa.selenium.*;
 import org.openqa.selenium.NoSuchElementException;
 import org.openqa.selenium.interactions.Sequence;
-import org.openqa.selenium.json.Json;
 import org.openqa.selenium.remote.CommandExecutor;
 import org.openqa.selenium.remote.ErrorHandler;
 import org.openqa.selenium.remote.FileDetector;
@@ -48,7 +47,7 @@ public class SmartDriver extends RemoteWebDriver {
 	/**
 	 * The current version of the SDK
 	 */
-	private static String SDK_VERSION = "selenium-0.1.13";
+	private static String SDK_VERSION = "selenium-0.1.16";
 
 
 	/**
@@ -103,6 +102,10 @@ public class SmartDriver extends RemoteWebDriver {
 
 	private String automationName;
 
+	public boolean UseJSChopper = false;
+
+	private int classifyMaxRetries = 3;
+
 	/**
 	 * Constructor, creates a new SmartDriver.
 	 *
@@ -120,6 +123,8 @@ public class SmartDriver extends RemoteWebDriver {
 
 		this.testCaseName = (String) initializationDict.get("testCaseName");
 		this.useClassifierDuringCreation = true; // Default to running it because it's easier for customers
+		this.UseJSChopper = initializationDict.get("useFastJsChopper") == null ? false : (Boolean) initializationDict.get("useFastJsChopper");
+		this.classifyMaxRetries = initializationDict.get("classifyMaxRetries") == null ? 3 : (Integer) initializationDict.get("classifyMaxRetries");
 		if (initializationDict.get("useClassifierDuringCreation") != null) {
 			this.useClassifierDuringCreation = (Boolean) initializationDict.get("useClassifierDuringCreation");
 		};
@@ -219,14 +224,33 @@ public class SmartDriver extends RemoteWebDriver {
 		driver.get(url);
 	}
 
-	public WebElement findElement(By locator, String elementName)
+	public WebElement findElement(org.openqa.selenium.By locator, String elementName) {
+		return findElement(locator, elementName, null);
+	}
+
+	public WebElement findElement(org.openqa.selenium.By locator, Float customAIThreshold) {
+		return findElement(locator, null, customAIThreshold);
+	}
+
+	public WebElement findElement(org.openqa.selenium.By locator, String elementName, Float customAIThreshold)
 	{
+		Float optionalThreshold = customAIThreshold;
 		if (elementName == null) {
-			elementName = String.format("element_name_by_locator_%s", locator.toString().replace('.', '_').replace(' ', '_'));
+			// If it's a By.ai element, use the name of the element
+			if (locator instanceof By.ByAI) {
+				elementName = ((By.ByAI) locator).aiElementName;
+			} else {
+				elementName = String.format("element_name_by_locator_%s", locator.toString().replace('.', '_').replace(' ', '_'));
+			}
 		}
 		try
-		{
-			WebElement driverElement = driver.findElement(locator);
+		{	WebElement driverElement = null;
+			if  (!(locator instanceof By.ByAI)) {
+				driverElement = driver.findElement(locator);
+			} else {
+				optionalThreshold = ((By.ByAI) locator).customAIThreshold;
+				throw new NoSuchElementException("Search by AI");
+			}
 			if (driverElement != null)
 			{
 				String key = uploadScreenshotIfNecessary(elementName, driverElement);
@@ -240,29 +264,66 @@ public class SmartDriver extends RemoteWebDriver {
 		{
 			log.info(MessageFormatter.format("Element '{}' was not found by Selenium, trying with Smartdriver...", elementName).getMessage());
 
-			ClassifyResult result = classify(elementName);
-			if (result.e != null) {
-				return result.e;
-			} else {
-				log.error(result.msg);
-			}
+			// Do 3 retries on classify on failure
 
+			for(int i = 0; i < classifyMaxRetries; i++) {
+				ClassifyResult result = classify(elementName, optionalThreshold);
+				if (result.e != null) {
+					return result.e;
+				} else {
+					if(i == classifyMaxRetries - 1) {
+						log.error(result.msg);
+					}
+				}
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
 			log.error(MessageFormatter.format("Smartdriver was also unable to find the element with name '{}'", elementName).getMessage());
 
 			throw x;
 		}
 	}
 
-	@Override
-	public WebElement findElement(By locator)
+	public WebElement findElement(org.openqa.selenium.By locator)
 	{
-		return findElement(locator, null);
+		return findElement(locator, null, null);
 	}
 
-	@Override
+
 	public List<WebElement> findElements(By locator)
 	{
 		return driver.findElements(locator);
+	}
+
+	public List<WebElement> findElementsByAI(String elementName) {
+		// For now only returns one element
+		WebElement e = findByAI(elementName);
+		if (e != null) {
+			return Arrays.asList(e);
+		} else {
+			return new ArrayList<WebElement>();
+		}
+	}
+
+	public List<WebElement> findElementsByAI(String elementName, Float customAIThreshold) {
+		// For now only returns one element
+		WebElement e = findByAI(elementName, customAIThreshold);
+		if (e != null) {
+			return Arrays.asList(e);
+		} else {
+			return new ArrayList<WebElement>();
+		}
+	}
+
+	public WebElement findElementByAI(String elementName) {
+		return findByAI(elementName);
+	}
+
+	public WebElement findElementByAI(String elementName, Float customAIThreshold) {
+		return findByAI(elementName, customAIThreshold);
 	}
 
 	@Override
@@ -403,6 +464,11 @@ public class SmartDriver extends RemoteWebDriver {
 		return this.findElement(By.className(using), elementName);
 	}
 
+	public WebElement findElementByClassName(String using, String elementName, Float customAIThreshold)
+	{
+		return this.findElement(By.className(using), elementName, customAIThreshold);
+	}
+
 	/**
 	 * Attempts to find an element by class name.
 	 *
@@ -411,7 +477,12 @@ public class SmartDriver extends RemoteWebDriver {
 	 */
 	public WebElement findElementByClassName(String using)
 	{
-		return findElementByClassName(using, null);
+		return findElementByClassName(using, null, null);
+	}
+
+	public WebElement findElementByClassName(String using, Float customAIThreshold)
+	{
+		return findElementByClassName(using, null, customAIThreshold);
 	}
 
 	/**
@@ -437,6 +508,11 @@ public class SmartDriver extends RemoteWebDriver {
 		return this.findElement(By.cssSelector(using), elementName);
 	}
 
+	public WebElement findElementByCssSelector(String using, String elementName, Float customAIThreshold)
+	{
+		return this.findElement(By.cssSelector(using), elementName, customAIThreshold);
+	}
+
 	/**
 	 * Attempts to find an element by css selector.
 	 *
@@ -445,7 +521,12 @@ public class SmartDriver extends RemoteWebDriver {
 	 */
 	public WebElement findElementByCssSelector(String using)
 	{
-		return findElementByCssSelector(using, null);
+		return findElementByCssSelector(using, null, null);
+	}
+
+	public WebElement findElementByCssSelector(String using, Float customAIThreshold)
+	{
+		return findElementByCssSelector(using, null, customAIThreshold);
 	}
 
 	/**
@@ -471,6 +552,11 @@ public class SmartDriver extends RemoteWebDriver {
 		return findElement(By.id(using), elementName);
 	}
 
+	public WebElement findElementById(String using, String elementName, Float customAIThreshold)
+	{
+		return findElement(By.id(using), elementName, customAIThreshold);
+	}
+
 	/**
 	 * Attempts to find an element by id.
 	 *
@@ -479,7 +565,12 @@ public class SmartDriver extends RemoteWebDriver {
 	 */
 	public WebElement findElementById(String using)
 	{
-		return findElementById(using, null);
+		return findElementById(using, null, null);
+	}
+
+	public WebElement findElementById(String using, Float customAIThreshold)
+	{
+		return findElementById(using, null, customAIThreshold);
 	}
 
 	/**
@@ -505,6 +596,11 @@ public class SmartDriver extends RemoteWebDriver {
 		return findElement(By.linkText(using), elementName);
 	}
 
+	public WebElement findElementByLinkText(String using, String elementName, Float customAIThreshold)
+	{
+		return findElement(By.linkText(using), elementName, customAIThreshold);
+	}
+
 	/**
 	 * Attempts to find an element by link text.
 	 *
@@ -513,8 +609,14 @@ public class SmartDriver extends RemoteWebDriver {
 	 */
 	public WebElement findElementByLinkText(String using)
 	{
-		return findElementByLinkText(using, null);
+		return findElementByLinkText(using, null, null);
 	}
+
+	public WebElement findElementByLinkText(String using, Float customAIThreshold)
+	{
+		return findElementByLinkText(using, null, customAIThreshold);
+	}
+
 
 	/**
 	 * Attempts to find all elements with the matching link text.
@@ -539,6 +641,11 @@ public class SmartDriver extends RemoteWebDriver {
 		return findElement(By.name(using), elementName);
 	}
 
+	public WebElement findElementByName(String using, String elementName, Float customAIThreshold)
+	{
+		return findElement(By.name(using), elementName, customAIThreshold);
+	}
+
 	/**
 	 * Attempts to find an element by name.
 	 *
@@ -547,7 +654,12 @@ public class SmartDriver extends RemoteWebDriver {
 	 */
 	public WebElement findElementByName(String using)
 	{
-		return findElementByName(using, null);
+		return findElementByName(using, null, null);
+	}
+
+	public WebElement findElementByName(String using, Float customAIThreshold)
+	{
+		return findElementByName(using, null, customAIThreshold);
 	}
 
 	/**
@@ -573,6 +685,16 @@ public class SmartDriver extends RemoteWebDriver {
 		return findElement(By.partialLinkText(using), elementName);
 	}
 
+	public WebElement findElementByPartialLinkText(String using, String elementName, Float customAIThreshold)
+	{
+		return findElement(By.partialLinkText(using), elementName, customAIThreshold);
+	}
+
+	public WebElement findElementByPartialLinkText(String using, Float customAIThreshold)
+	{
+		return findElement(By.partialLinkText(using), null, customAIThreshold);
+	}
+
 	/**
 	 * Attempts to find an element by partial link text.
 	 *
@@ -581,7 +703,7 @@ public class SmartDriver extends RemoteWebDriver {
 	 */
 	public WebElement findElementByPartialLinkText(String using)
 	{
-		return findElementByPartialLinkText(using, null);
+		return findElementByPartialLinkText(using, null, null);
 	}
 
 	/**
@@ -607,6 +729,10 @@ public class SmartDriver extends RemoteWebDriver {
 		return findElement(By.tagName(using), elementName);
 	}
 
+	public WebElement findElementByTagName(String using, String elementName, Float customAIThreshold) {
+		return findElement(By.tagName(using), elementName, customAIThreshold);
+	}
+
 	/**
 	 * Attempts to find an element by tag name.
 	 *
@@ -615,7 +741,12 @@ public class SmartDriver extends RemoteWebDriver {
 	 */
 	public WebElement findElementByTagName(String using)
 	{
-		return findElementByTagName(using, null);
+		return findElementByTagName(using, null, null);
+	}
+
+	public WebElement findElementByTagName(String using, Float customAIThreshold)
+	{
+		return findElementByTagName(using, null, customAIThreshold);
 	}
 
 	/**
@@ -641,6 +772,11 @@ public class SmartDriver extends RemoteWebDriver {
 		return findElement(By.xpath(using), elementName);
 	}
 
+	public WebElement findElementByXPath(String using, String elementName, Float customAiThreshold)
+	{
+		return findElement(By.xpath(using), elementName, customAiThreshold);
+	}
+
 	/**
 	 * Attempts to find an element by xpath.
 	 *
@@ -649,7 +785,12 @@ public class SmartDriver extends RemoteWebDriver {
 	 */
 	public WebElement findElementByXPath(String using)
 	{
-		return findElementByXPath(using, null);
+		return findElementByXPath(using, null, null);
+	}
+
+	public WebElement findElementByXPath(String using, Float customAiThreshold)
+	{
+		return findElementByXPath(using, null, customAiThreshold);
 	}
 
 	/**
@@ -680,13 +821,28 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param elementName The label name of the element to be classified.
 	 * @return An element associated with {@code elementName}. Throws NoSuchElementException otherwise.
 	 */
-	public WebElement findElementByElementName(String elementName)
+	public WebElement findElementByElementName(String elementName, Float customAiThreshold)
 	{
-		ClassifyResult r = classify(elementName);
-		if (r.e == null)
-			throw new NoSuchElementException(r.msg);
+		for(int i = 0; i < classifyMaxRetries; i++) {
+			ClassifyResult result = classify(elementName, customAiThreshold);
+			if (result.e != null) {
+				return result.e;
+			} else {
+				if(i == classifyMaxRetries - 1) {
+					throw new NoSuchElementException(result.msg);
+				}
+			}
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		return null;
+	}
 
-		return r.e;
+	public WebElement findElementByElementName(String elementName) {
+		return findElementByElementName(elementName, null);
 	}
 
 	/**
@@ -698,6 +854,11 @@ public class SmartDriver extends RemoteWebDriver {
 	public WebElement findByAI(String elementName)
 	{
 		return findElementByElementName(elementName);
+	}
+
+	public WebElement findByAI(String elementName, Float customAiThreshold)
+	{
+		return findElementByElementName(elementName, customAiThreshold);
 	}
 
 	private String getScreenshotHash(String screenshotBase64) {
@@ -716,6 +877,7 @@ public class SmartDriver extends RemoteWebDriver {
 		payload.addProperty("api_key", apiKey);
 		payload.addProperty("label", elementName);
 		payload.addProperty("screenshot_uuid", screenshotUUID);
+		payload.add("stack_trace", Utils.collectStackTrace());
 		try {
 			JsonObject res = JsonUtils.responseAsJson(NetUtils.basicPOST(client, serverURL, "exists_screenshot", payload));
 			return res;
@@ -865,11 +1027,15 @@ public class SmartDriver extends RemoteWebDriver {
 		{
 			log.info(MessageFormatter.format("Element '{}' was not found by Selenium, trying with Smartdriver...", elementName).getMessage());
 
-			ClassifyResult result = classify(elementName);
-			if (result.e != null) {
-				return result.e;
-			} else {
-				log.error(result.msg);
+			for(int i = 0; i < classifyMaxRetries; i++) {
+				ClassifyResult result = classify(elementName);
+				if (result.e != null) {
+					return result.e;
+				} else {
+					if(i == classifyMaxRetries - 1) {
+						log.error(result.msg);
+					}
+				}
 			}
 
 			log.error(MessageFormatter.format("Smartdriver was also unable to find the element with name '{}'", elementName).getMessage());
@@ -912,13 +1078,19 @@ public class SmartDriver extends RemoteWebDriver {
 		}
 	}
 
-	private CollectionUtils.Tuple<JsonObject, Boolean> getTCBox(String elementName, String eventUUID) {
+	private CollectionUtils.Tuple<JsonObject, Boolean> getTCBox(String elementName, String eventUUID, Float customAiThreshold) {
+		JsonObject stackTrace = Utils.collectStackTrace();
+
 		JsonObject payload = new JsonObject();
 		payload.addProperty("api_key", apiKey);
 		payload.addProperty("label", elementName);
 		payload.addProperty("screenshot_uuid", lastTestCaseScreenshotUUID);
 		payload.addProperty("run_classifier", useClassifierDuringCreation);
 		payload.addProperty("event_id", eventUUID);
+		payload.addProperty("custom_ai_threshold", customAiThreshold);
+		payload.add("stack_trace", stackTrace);
+
+
 
 		try {
 			JsonObject res = JsonUtils.responseAsJson(NetUtils.basicPOST(client, serverURL, "testcase/get_action_info", payload));
@@ -952,19 +1124,20 @@ public class SmartDriver extends RemoteWebDriver {
 	 * @param elementName The name of the element to run classification on.
 	 * @return The result of the classification.
 	 */
-	protected ClassifyResult classify(String elementName)
+	protected ClassifyResult classify(String elementName, Float customAiThreshold)
 	{
+		JsonObject stackTrace = Utils.collectStackTrace();
 		if(testCaseCreationMode) {
 			String screenshotBase64 = driver.getScreenshotAs(OutputType.BASE64);
 			JsonObject res = uploadTCScreenshot(screenshotBase64, elementName);
 			if (res.get("success").getAsBoolean()) {
 				lastTestCaseScreenshotUUID = res.get("screenshot_uuid").getAsString();
-				CollectionUtils.Tuple<JsonObject, Boolean> boxResponseTp = getTCBox(elementName, null);
+				CollectionUtils.Tuple<JsonObject, Boolean> boxResponseTp = getTCBox(elementName, null, customAiThreshold);
 				JsonObject boxResponse = boxResponseTp.k;
 				Boolean needsReload = boxResponseTp.v;
 
 				if (boxResponse != null && boxResponse.get("success").getAsBoolean() && boxResponse.get("predicted_element") != JsonNull.INSTANCE) {
-					return new ClassifyResult(new SmartDriverElement(boxResponse.get("predicted_element").getAsJsonObject(), this, getPageOffset()), lastTestCaseScreenshotUUID);
+					return new ClassifyResult(new SmartDriverElement(boxResponse.get("predicted_element").getAsJsonObject(), this, getPageOffset()), lastTestCaseScreenshotUUID, boxResponse);
 				} else {
 					// label_url = self.url + '/testcase/label?test_case_name=' + urllib.parse.quote(self.test_case_uuid)
 					// generate a uuid
@@ -972,14 +1145,15 @@ public class SmartDriver extends RemoteWebDriver {
 					String labelUrl = serverURL + "/testcase/label?test_case_name=" + URLEncoder.encode(testCaseName) + "&event_id=" + eventUUID + "&api_key=" + apiKey;;
 					openBrowser(labelUrl);
 					while (true) {
-						boxResponseTp = getTCBox(elementName, eventUUID);
+						boxResponseTp = getTCBox(elementName, eventUUID, customAiThreshold);
 						boxResponse = boxResponseTp.k;
 						needsReload = boxResponseTp.v;
 						if (boxResponse != null && boxResponse.get("success").getAsBoolean() && boxResponse.get("predicted_element") != JsonNull.INSTANCE) {
-							return new ClassifyResult(new SmartDriverElement(boxResponse.get("predicted_element").getAsJsonObject(), this, getPageOffset()), lastTestCaseScreenshotUUID);
+							return new ClassifyResult(new SmartDriverElement(boxResponse.get("predicted_element").getAsJsonObject(), this, getPageOffset()), lastTestCaseScreenshotUUID, boxResponse);
 						}
 						if (needsReload) {
 							screenshotBase64 = driver.getScreenshotAs(OutputType.BASE64);
+							lastTestCaseScreenshotUUID = getScreenshotHash(screenshotBase64);
 							uploadTCScreenshot(screenshotBase64, elementName);
 						}
 						try {
@@ -992,7 +1166,7 @@ public class SmartDriver extends RemoteWebDriver {
 			} else {
 				log.info("Failed to upload test case screenshot");
 				log.info(res.get("message").getAsString());
-				return new ClassifyResult(null, lastTestCaseScreenshotUUID, res.get("message").getAsString());
+				return new ClassifyResult(null, lastTestCaseScreenshotUUID, res.get("message").getAsString(), res);
 			}
 		} else {
 			String pageSource = "", msg = "Smartdriver driver exception", key = null;
@@ -1017,7 +1191,7 @@ public class SmartDriver extends RemoteWebDriver {
 						screenshotExistsResponse = checkScreenshotExists(screenshotUUID, elementName);
 					}
 					if (screenshotExistsResponse != null && screenshotExistsResponse.get("success").getAsBoolean() && screenshotExistsResponse.get("predicted_element") != JsonNull.INSTANCE) {
-						return new ClassifyResult(new SmartDriverElement(screenshotExistsResponse.get("predicted_element").getAsJsonObject(), this, getPageOffset()), null);
+						return new ClassifyResult(new SmartDriverElement(screenshotExistsResponse.get("predicted_element").getAsJsonObject(), this, getPageOffset()), null, screenshotExistsResponse);
 					}
 				}
 				JsonObject payload = new JsonObject();
@@ -1025,25 +1199,28 @@ public class SmartDriver extends RemoteWebDriver {
 				payload.addProperty("label", elementName);
 				payload.addProperty("screenshot", screenshotBase64);
 				payload.addProperty("test_case_name", testCaseName);
+				payload.add("stack_trace", stackTrace);
+				payload.addProperty("custom_ai_threshold", customAiThreshold);
 
 				JsonObject classifyResponse = JsonUtils.responseAsJson(NetUtils.basicPOST(client, serverURL, "detect", payload));
 
 				if (!classifyResponse.get("success").getAsBoolean()) {
-					classifyResponse = classifyFullScreen(elementName, screenshotBase64);
+					classifyResponse = classifyFullScreen(elementName, screenshotBase64, customAiThreshold);
 					if (!classifyResponse.get("success").getAsBoolean()) {
-						log.info(classifyResponse.get("message").getAsString());
-						return new ClassifyResult(null, null, classifyResponse.get("message").getAsString());
+						msg = classifyResponse.get("message").getAsString().replace(prodUrl, serverURL.toString());
+						log.info(msg);
+						return new ClassifyResult(null, null, classifyResponse.get("message").getAsString(), classifyResponse);
 					}
 				}
 				msg = classifyResponse.get("message").getAsString().replace(prodUrl, serverURL.toString());
 				log.info(msg);
 				try {
 					return new ClassifyResult(new SmartDriverElement(classifyResponse.get("predicted_element").getAsJsonObject(), this, getPageOffset()),
-							classifyResponse.get("screenshot_uuid").getAsString());
+							classifyResponse.get("screenshot_uuid").getAsString(), classifyResponse);
 				} catch (Throwable e) {
 					log.error("Error creating SmartDriverElement from response");
 					e.printStackTrace();
-					return new ClassifyResult(null, key, msg);
+					return new ClassifyResult(null, key, msg, classifyResponse);
 				}
 
 			} catch (Throwable e) {
@@ -1051,8 +1228,12 @@ public class SmartDriver extends RemoteWebDriver {
 			}
 
 			log.warn(msg);
-			return new ClassifyResult(null, key, msg);
+			return new ClassifyResult(null, key, msg, null);
 		}
+	}
+
+	protected ClassifyResult classify(String elementName) {
+		return classify(elementName, null);
 	}
 
 	private float getPageOffset(){
@@ -1065,12 +1246,17 @@ public class SmartDriver extends RemoteWebDriver {
 	}
 
 	JsonObject classifyFullScreen(String elementName, String screenshotBase64) {
+		return classifyFullScreen(elementName, screenshotBase64, null);
+	}
+
+	JsonObject classifyFullScreen(String elementName, String screenshotBase64, Float customAiThreshold) {
 		int lastOffset = -1;
 		int offset = 1;
 		int windowHeight = windowSize.height;
 		scrollPage(-100000);
 		JsonObject r = new JsonObject();
 		r.addProperty("success", false);
+		JsonObject stackTrace = Utils.collectStackTrace();
 
 		while(offset > lastOffset) {
 			lastOffset = offset;
@@ -1080,6 +1266,8 @@ public class SmartDriver extends RemoteWebDriver {
 			payload.addProperty("label", elementName);
 			payload.addProperty("screenshot", screenshotBase64);
 			payload.addProperty("test_case_name", testCaseName);
+			payload.addProperty("custom_ai_threshold", customAiThreshold);
+			payload.add("stack_trace", stackTrace);
 
 			try {
 				r = JsonUtils.responseAsJson(NetUtils.basicPOST(client, serverURL, "detect", payload));
@@ -1122,6 +1310,8 @@ public class SmartDriver extends RemoteWebDriver {
 		 */
 		public String msg;
 
+		public JsonObject classifyResponse;
+
 		/**
 		 * Constructor, creates a new ClassifyResult.
 		 *
@@ -1129,11 +1319,12 @@ public class SmartDriver extends RemoteWebDriver {
 		 * @param key The key to use
 		 * @param msg The message to associate with this result
 		 */
-		ClassifyResult(SmartDriverElement e, String key, String msg)
+		ClassifyResult(SmartDriverElement e, String key, String msg, JsonObject classifyResponse)
 		{
 			this.e = e;
 			this.key = key;
 			this.msg = msg;
+			this.classifyResponse = classifyResponse;
 		}
 
 		/**
@@ -1142,9 +1333,9 @@ public class SmartDriver extends RemoteWebDriver {
 		 * @param e
 		 * @param key
 		 */
-		ClassifyResult(SmartDriverElement e, String key)
+		ClassifyResult(SmartDriverElement e, String key, JsonObject classifyResponse)
 		{
-			this(e, key, "");
+			this(e, key, "", classifyResponse);
 		}
 	}
 
@@ -1153,3 +1344,4 @@ public class SmartDriver extends RemoteWebDriver {
 		driver.close();
 	}
 }
+

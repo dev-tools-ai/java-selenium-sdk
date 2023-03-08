@@ -2,6 +2,8 @@ package ai.devtools.utils;
 
 import com.google.gson.JsonObject;
 
+import java.util.HashMap;
+
 public class CollectionUtils
 {
 	/**
@@ -27,6 +29,8 @@ public class CollectionUtils
 				jo.addProperty(k, (Boolean) v);
 			else if (v instanceof Character)
 				jo.addProperty(k, (Character) v);
+			else if (v instanceof JsonObject)
+				jo.add(k, (JsonObject) v);
 			else
 				throw new IllegalArgumentException(String.format("'%s' is not an acceptable type for JSON!", v));
 		}

@@ -39,37 +39,43 @@ public class BasicCrawl  {
         options.addArguments("--headless");
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
-        options.addArguments("window-size=1280x1024");
+        options.addArguments("window-size=1600x1200");
+        options.addArguments("--force-device-scale-factor=2.0");
         ChromeDriver chromeDriver = new ChromeDriver(options);
         try {
-            String api_key = "4bdfb52c9b77fc14ef50dcfb";
+            String api_key = "<<get your api key at smartdriver.dev-tools.ai>>";
             HashMap<String, Object> config = new HashMap<String, Object>();
-            config.put("testCaseName", "stopa_navigation");
+            config.put("testCaseName", "local_ci_test");
+            config.put("classifyMaxRetries", 1);
+            config.put("useFastJsChopper", true);
             SmartDriver baseDriver = new SmartDriver(chromeDriver, api_key, config);
             SmartDriver driver = Mockito.spy(baseDriver);
-            driver.get("https://stopa.io");
+            driver.get("http://0.0.0.0:5005/index.html");
 
             Thread.sleep(2000);
 
-            WebElement element = driver.findByAI("link What Artists Notice");
+            WebElement element = driver.findByAI("el_what_artists_notice", 0.99f);
+            String html = element.getAttribute("innerHTML");
             String out = outContent.toString();
+            System.out.println(out);
             assert (
-                    out.contains("Successful classification of link What Artists Notice") ||
-                    out.contains("Cache hit for link What Artists Notice") ||
-	            out.contains("Screenshot exists. Found element on screenshot for link What Artists Notice"));
+                    out.contains("Successful classification of el_what_artists_notice") ||
+                    out.contains("Cache hit for el_what_artists_notice") ||
+	            out.contains("Screenshot exists. Found element on screenshot for el_what_artists_notice"));
             element.click();
             Thread.sleep(2000);
 
             WebElement paintersHeader = driver.findElementByXPath("//h1[contains(text(),'Painters')]");
             verify(driver, Mockito.times(1)).updateElement(Mockito.any(), Mockito.anyString(), Mockito.eq("element_name_by_locator_By_xpath:_//h1[contains(text(),'Painters')]"), Mockito.anyBoolean());
             assert (paintersHeader.isDisplayed());
-            driver.get("https://stopa.io");
+            driver.get("http://localhost:5005/index.html");
 
 
             Thread.sleep(2000);
 
-            WebElement clojureLink = driver.findElementByXPath("//a[contains(text(),'bad_selector')]");
-            verify(driver, Mockito.times(1)).classify(Mockito.eq("element_name_by_locator_By_xpath:_//a[contains(text(),'bad_selector')]"));
+            WebElement clojureLink = driver.findElement(By.xpath("//a[contains(text(),'bad_selector')]"), 0.99f);
+            verify(driver, Mockito.times(1)).classify(Mockito.eq("element_name_by_locator_By_xpath:_//a[contains(text(),'bad_selector')]"),
+                    Mockito.eq(0.99f));
             assert (clojureLink.isDisplayed());
             out = outContent.toString();
             assert(out.contains("Element 'element_name_by_locator_By_xpath:_//a[contains(text(),'bad_selector')]' was not found by Selenium, trying with Smartdriver...") &&
@@ -104,7 +110,7 @@ public class BasicCrawl  {
         options.addArguments("window-size=1280x1024");
         ChromeDriver chromeDriver = new ChromeDriver(options);
         try {
-            String api_key = "4bdfb52c9b77fc14ef50dcfb";
+            String api_key = "<<get your api key at smartdriver.dev-tools.ai>>";
             HashMap<String, Object> config = new HashMap<String, Object>();
             config.put("testCaseName", "stopa_navigation");
             SmartDriver driver = new SmartDriver(chromeDriver, api_key, config);
